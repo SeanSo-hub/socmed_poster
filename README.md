@@ -1,6 +1,22 @@
-# Fa## 🚀 Three Ways to Use
+# Fa## 🚀 Three Ways to Use### Option 1: Web Interface (Recommended)
 
-### Option 1: Web Interface (Recommended)
+- 🌐 **Web Interface**: Clean, responsive UI for posting messages
+- 📱 **Mobile Friendly**: Works on desktop and mobile devices
+- ✅ **Real-time Status**: Shows connection status to Facebook
+- 🔗 **Link Support**: Optional link attachment to posts
+- 📊 **Character Counter**: Shows remaining characters (63,206 limit)
+- 🖼️ **Photo Upload**: Upload and post images (PNG, JPG, JPEG, GIF, WebP)
+- 🎬 **Video Upload**: Upload and post videos (MP4, AVI, MOV, WMV, FLV, WebM, MKV)
+- 👁️ **Media Preview**: Preview images and videos before posting
+
+### Option 2: Command Line Scripts
+
+- 🖥️ **Command Line**: Direct execution from terminal
+- ⚡ **Fast**: Quick posting without browser
+- 🤖 **Automation**: Perfect for scripts and automation
+- 🔧 **Customizable**: Easy to modify for specific needs
+- 🖼️ **Media Support**: Upload photos and videos via code
+- 📁 **File Handling**: Supports local file uploads 1: Web Interface (Recommended)
 
 - 🌐 **Web Interface**: Clean, responsive UI for posting messages
 - 📱 **Mobile Friendly**: Works on desktop and mobile devices
@@ -67,8 +83,11 @@ A complete solution for posting messages to Facebook pages with both web interfa
 
 3. **Use the interface**:
    - Check that the connection status shows "Connected to Facebook"
-   - Type your message in the text area
-   - Optionally add a link
+   - Select post type: Text, Photo, or Video
+   - For text posts: Type your message and optionally add a link
+   - For photo posts: Select an image file and add an optional caption
+   - For video posts: Select a video file and add an optional description
+   - Preview your media before posting
    - Click "Post to Facebook"
    - Check your Facebook page to see the post
 
@@ -91,8 +110,19 @@ A complete solution for posting messages to Facebook pages with both web interfa
 
 3. **Customize the message**:
    Edit line 94 in `post_script.py`:
+
    ```python
    success = poster.post("Your custom message here! 🚀")
+   ```
+
+4. **To post media** (uncomment these lines):
+
+   ```python
+   # For photos
+   photo_success = poster.post_photo("./path/to/image.jpg", "Your caption")
+
+   # For videos
+   video_success = poster.post_video("./path/to/video.mp4", "Your description")
    ```
 
 ### Standalone Script (Alternative)
@@ -111,8 +141,19 @@ A complete solution for posting messages to Facebook pages with both web interfa
 
 3. **Customize the message**:
    Edit line 104 in `standalone_script.py`:
+
    ```python
    message = poster.post("Your custom standalone message!")
+   ```
+
+4. **To post media** (uncomment these lines):
+
+   ```python
+   # For photos
+   photo_success = poster.post_photo("./test_image.jpg", "Test photo caption")
+
+   # For videos
+   video_success = poster.post_video("./test_video.mp4", "Test video description")
    ```
 
 ## 📁 File Structure
@@ -124,6 +165,7 @@ python script/
 ├── standalone_script.py   # Self-contained posting script
 ├── templates/
 │   └── index.html         # Web interface template
+├── uploads/               # Temporary upload directory (auto-created)
 ├── .env                   # Your credentials (create this)
 ├── requirements.txt       # Python dependencies
 └── README.md             # This file

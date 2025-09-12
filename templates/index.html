@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Facebook Poster</title>
+    <title>Socmed Poster</title>
     <style>
       * {
         margin: 0;
@@ -64,7 +64,9 @@
       }
 
       textarea,
-      input[type="url"] {
+      input[type="url"],
+      select,
+      input[type="file"] {
         width: 100%;
         padding: 15px;
         border: 2px solid #e1e5e9;
@@ -72,12 +74,39 @@
         font-size: 16px;
         transition: border-color 0.3s ease;
         resize: vertical;
+        background: white;
       }
 
       textarea:focus,
-      input[type="url"]:focus {
+      input[type="url"]:focus,
+      select:focus,
+      input[type="file"]:focus {
         outline: none;
         border-color: #1877f2;
+      }
+
+      .file-info {
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      .preview-container {
+        margin-top: 10px;
+        text-align: center;
+      }
+
+      .preview-image {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      }
+
+      .preview-video {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 10px;
       }
 
       textarea {
@@ -185,7 +214,7 @@
   <body>
     <div class="container">
       <div class="header">
-        <h1>📱 Facebook Poster</h1>
+        <h1>📱 SocMed Poster</h1>
         <p>Post messages to your Facebook page</p>
         <div id="status" style="margin-top: 15px">
           <span class="status-indicator status-offline"></span>
@@ -201,15 +230,18 @@
           {% endfor %} {% endif %} {% endwith %}
         </div>
 
-        <form method="POST" action="{{ url_for('post_message') }}">
+        <form
+          method="POST"
+          action="{{ url_for('post_message') }}"
+          enctype="multipart/form-data"
+        >
           <div class="form-group">
-            <label for="message">📝 Message *</label>
+            <label for="message" id="message-label">📝 Caption</label>
             <textarea
               id="message"
               name="message"
               placeholder="What's on your mind?"
               maxlength="63206"
-              required
               oninput="updateCharCount()"
             ></textarea>
             <div class="char-count">
@@ -218,6 +250,22 @@
           </div>
 
           <div class="form-group">
+            <label for="media_file">📎 Add Photo or Video (optional)</label>
+            <input
+              type="file"
+              id="media_file"
+              name="media_file"
+              accept="image/*,video/*"
+              onchange="previewFile()"
+            />
+            <div class="file-info">
+              Supported: Images (PNG, JPG, GIF, WebP) • Videos (MP4, AVI, MOV,
+              WMV, WebM)
+            </div>
+            <div id="media-preview"></div>
+          </div>
+
+          <!-- <div class="form-group">
             <label for="link">🔗 Link (optional)</label>
             <input
               type="url"
@@ -225,9 +273,9 @@
               name="link"
               placeholder="https://example.com"
             />
-          </div>
+          </div> -->
 
-          <button type="submit" class="btn">🚀 Post to Facebook</button>
+          <button type="submit" class="btn">Post to Facebook</button>
         </form>
       </div>
 
@@ -242,6 +290,57 @@
         const textarea = document.getElementById("message");
         const charCount = document.getElementById("char-count");
         charCount.textContent = textarea.value.length;
+      }
+
+      // Preview uploaded files
+      function previewFile() {
+        const fileInput = document.getElementById("media_file");
+        const previewDiv = document.getElementById("media-preview");
+        const file = fileInput.files[0];
+
+        if (file) {
+          const reader = new FileReader();
+          const isImage = file.type.startsWith("image/");
+          const isVideo = file.type.startsWith("video/");
+
+          reader.onload = function (e) {
+            if (isImage) {
+              previewDiv.innerHTML = `
+                <div class="preview-container">
+                  <img src="${
+                    e.target.result
+                  }" alt="Preview" class="preview-image">
+                  <div class="file-info">📷 ${file.name} (${(
+                file.size /
+                1024 /
+                1024
+              ).toFixed(2)} MB)</div>
+                </div>
+              `;
+            } else if (isVideo) {
+              previewDiv.innerHTML = `
+                <div class="preview-container">
+                  <video controls class="preview-video">
+                    <source src="${e.target.result}" type="${file.type}">
+                    Your browser does not support the video tag.
+                  </video>
+                  <div class="file-info">🎬 ${file.name} (${(
+                file.size /
+                1024 /
+                1024
+              ).toFixed(2)} MB)</div>
+                </div>
+              `;
+            } else {
+              previewDiv.innerHTML = `
+                <div class="file-info">❌ Unsupported file type: ${file.type}</div>
+              `;
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          previewDiv.innerHTML = "";
+        }
       }
 
       // Check connection status

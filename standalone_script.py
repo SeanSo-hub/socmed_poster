@@ -85,6 +85,66 @@ class FacebookPoster:
             print(f"✅ Posted! ID: {result.get('id')}")
             return True
         return False
+    
+    def post_photo(self, image_path: str, caption: Optional[str] = None) -> bool:
+        """Upload and post a photo to Facebook page"""
+        if not os.path.exists(image_path):
+            print(f"❌ Image file not found: {image_path}")
+            return False
+        
+        url = f"{self.base_url}/{self.page_id}/photos"
+        
+        try:
+            with open(image_path, "rb") as image_file:
+                files = {"source": image_file}
+                data = {"access_token": self.access_token}
+                if caption:
+                    data["caption"] = caption
+                
+                response = requests.post(url, files=files, data=data, timeout=60)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"✅ Photo posted! ID: {result.get('id')}")
+                    return True
+                else:
+                    error = response.json().get("error", {}) if response.content else {}
+                    print(f"❌ Photo upload failed - Error {error.get('code', '')}: {error.get('message', 'Request failed')}")
+                    return False
+                    
+        except Exception as e:
+            print(f"❌ Photo upload error: {e}")
+            return False
+    
+    def post_video(self, video_path: str, description: Optional[str] = None) -> bool:
+        """Upload and post a video to Facebook page"""
+        if not os.path.exists(video_path):
+            print(f"❌ Video file not found: {video_path}")
+            return False
+        
+        url = f"{self.base_url}/{self.page_id}/videos"
+        
+        try:
+            with open(video_path, "rb") as video_file:
+                files = {"source": video_file}
+                data = {"access_token": self.access_token}
+                if description:
+                    data["description"] = description
+                
+                response = requests.post(url, files=files, data=data, timeout=300)
+                
+                if response.status_code == 200:
+                    result = response.json()
+                    print(f"✅ Video posted! ID: {result.get('id')}")
+                    return True
+                else:
+                    error = response.json().get("error", {}) if response.content else {}
+                    print(f"❌ Video upload failed - Error {error.get('code', '')}: {error.get('message', 'Request failed')}")
+                    return False
+                    
+        except Exception as e:
+            print(f"❌ Video upload error: {e}")
+            return False
 
 def main():
     """Main execution function"""
@@ -103,6 +163,12 @@ def main():
         
         # Post message
         message = poster.post("Test for standalone script!")
+        
+        # Uncomment to test photo upload:
+        # photo_success = poster.post_photo("./test_image.jpg", "Test photo from standalone script!")
+        
+        # Uncomment to test video upload:
+        # video_success = poster.post_video("./test_video.mp4", "Test video from standalone script!")
         
         print("✅ Complete!" if message else "❌ Failed!")
         
