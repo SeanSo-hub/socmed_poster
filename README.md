@@ -1,22 +1,36 @@
-# Fa## 🚀 Three Ways to Use### Option 1: Web Interface (Recommended)
+# SocMed Poster
+
+A complete solution for posting text, images, and videos to Facebook pages with both web interface and command line options.
+
+## 🚀 Three Ways to Use
+
+### Option 1: Web Interface (Recommended)
 
 - 🌐 **Web Interface**: Clean, responsive UI for posting messages
 - 📱 **Mobile Friendly**: Works on desktop and mobile devices
 - ✅ **Real-time Status**: Shows connection status to Facebook
 - 🔗 **Link Support**: Optional link attachment to posts
 - 📊 **Character Counter**: Shows remaining characters (63,206 limit)
-- 🖼️ **Photo Upload**: Upload and post images (PNG, JPG, JPEG, GIF, WebP)
-- 🎬 **Video Upload**: Upload and post videos (MP4, AVI, MOV, WMV, FLV, WebM, MKV)
+- � **Smart Upload**: Upload any media file - automatically detects and posts images or videos
+- 🖼️ **Supported Images**: PNG, JPG, JPEG, GIF, WebP
+- 🎬 **Supported Videos**: MP4, AVI, MOV, WMV, FLV, WebM, MKV
 - 👁️ **Media Preview**: Preview images and videos before posting
 
-### Option 2: Command Line Scripts
+### Option 2: Post Script (Main CLI)
 
 - 🖥️ **Command Line**: Direct execution from terminal
 - ⚡ **Fast**: Quick posting without browser
 - 🤖 **Automation**: Perfect for scripts and automation
 - 🔧 **Customizable**: Easy to modify for specific needs
 - 🖼️ **Media Support**: Upload photos and videos via code
-- 📁 **File Handling**: Supports local file uploads 1: Web Interface (Recommended)
+- 📁 **File Handling**: Supports local file uploads
+
+### Option 3: Standalone Script (Independent)
+
+- 🎯 **Self-contained**: Independent version with built-in posting logic
+- 🔄 **Consistent**: Same functionality as post_script.py but standalone
+- 📦 **Portable**: Can be used independently without other files
+- 🖼️ **Media Support**: Full photo and video upload capabilities
 
 - 🌐 **Web Interface**: Clean, responsive UI for posting messages
 - 📱 **Mobile Friendly**: Works on desktop and mobile devices
