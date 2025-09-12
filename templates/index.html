@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Facebook Poster</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .container {
+        width: 100%;
+        max-width: 600px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+      }
+
+      .header {
+        background: linear-gradient(45deg, #1877f2, #42a5f5);
+        color: white;
+        padding: 30px;
+        text-align: center;
+      }
+
+      .header h1 {
+        font-size: 2.5em;
+        margin-bottom: 10px;
+      }
+
+      .header p {
+        opacity: 0.9;
+        font-size: 1.1em;
+      }
+
+      .content {
+        padding: 40px;
+      }
+
+      .form-group {
+        margin-bottom: 25px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+      }
+
+      textarea,
+      input[type="url"] {
+        width: 100%;
+        padding: 15px;
+        border: 2px solid #e1e5e9;
+        border-radius: 10px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+        resize: vertical;
+      }
+
+      textarea:focus,
+      input[type="url"]:focus {
+        outline: none;
+        border-color: #1877f2;
+      }
+
+      textarea {
+        min-height: 120px;
+        font-family: inherit;
+      }
+
+      .btn {
+        background: linear-gradient(45deg, #1877f2, #42a5f5);
+        color: white;
+        border: none;
+        padding: 15px 30px;
+        border-radius: 10px;
+        font-size: 16px;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 20px rgba(24, 119, 242, 0.3);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+
+      .flash-messages {
+        margin-bottom: 20px;
+      }
+
+      .flash {
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        font-weight: 500;
+      }
+
+      .flash.success {
+        background: #d4edda;
+        color: #155724;
+        border: 1px solid #c3e6cb;
+      }
+
+      .flash.error {
+        background: #f8d7da;
+        color: #721c24;
+        border: 1px solid #f5c6cb;
+      }
+
+      .status-indicator {
+        display: inline-block;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+
+      .status-online {
+        background: #28a745;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+      }
+
+      .status-offline {
+        background: #dc3545;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+      }
+
+      .footer {
+        text-align: center;
+        padding: 20px;
+        color: #666;
+        font-size: 14px;
+      }
+
+      .char-count {
+        text-align: right;
+        font-size: 12px;
+        color: #666;
+        margin-top: 5px;
+      }
+
+      @media (max-width: 768px) {
+        .container {
+          margin: 10px;
+          border-radius: 10px;
+        }
+
+        .header {
+          padding: 20px;
+        }
+
+        .header h1 {
+          font-size: 2em;
+        }
+
+        .content {
+          padding: 20px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>📱 Facebook Poster</h1>
+        <p>Post messages to your Facebook page</p>
+        <div id="status" style="margin-top: 15px">
+          <span class="status-indicator status-offline"></span>
+          <span>Checking connection...</span>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="flash-messages">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div class="flash {{ category }}">{{ message }}</div>
+          {% endfor %} {% endif %} {% endwith %}
+        </div>
+
+        <form method="POST" action="{{ url_for('post_message') }}">
+          <div class="form-group">
+            <label for="message">📝 Message *</label>
+            <textarea
+              id="message"
+              name="message"
+              placeholder="What's on your mind?"
+              maxlength="63206"
+              required
+              oninput="updateCharCount()"
+            ></textarea>
+            <div class="char-count">
+              <span id="char-count">0</span> / 63,206 characters
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="link">🔗 Link (optional)</label>
+            <input
+              type="url"
+              id="link"
+              name="link"
+              placeholder="https://example.com"
+            />
+          </div>
+
+          <button type="submit" class="btn">🚀 Post to Facebook</button>
+        </form>
+      </div>
+
+      <div class="footer">
+        Made with ❤️ using Flask • Check your Facebook page to see posts
+      </div>
+    </div>
+
+    <script>
+      // Update character count
+      function updateCharCount() {
+        const textarea = document.getElementById("message");
+        const charCount = document.getElementById("char-count");
+        charCount.textContent = textarea.value.length;
+      }
+
+      // Check connection status
+      async function checkStatus() {
+        try {
+          const response = await fetch("/status");
+          const data = await response.json();
+          const statusElement = document.getElementById("status");
+
+          if (data.token_valid && data.page_access) {
+            statusElement.innerHTML = `
+                        <span class="status-indicator status-online"></span>
+                        <span>Connected to Facebook Page: ${data.page_name}</span>
+                    `;
+          } else {
+            statusElement.innerHTML = `
+                        <span class="status-indicator status-offline"></span>
+                        <span>Connection failed - Check credentials</span>
+                    `;
+          }
+        } catch (error) {
+          const statusElement = document.getElementById("status");
+          statusElement.innerHTML = `
+                    <span class="status-indicator status-offline"></span>
+                    <span>Unable to check status</span>
+                `;
+        }
+      }
+
+      // Check status when page loads
+      window.onload = function () {
+        checkStatus();
+        updateCharCount();
+      };
+
+      // Auto-resize textarea
+      const textarea = document.getElementById("message");
+      textarea.addEventListener("input", function () {
+        this.style.height = "auto";
+        this.style.height = Math.min(this.scrollHeight, 300) + "px";
+      });
+    </script>
+  </body>
+</html>
