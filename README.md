@@ -1,30 +1,35 @@
 # SocMed Poster
 
-A complete solution for posting text, images, and videos to Facebook pages with both web interface and command line options.
+A complete solution for posting text, images, and videos to both Facebook pages and Twitter with a unified web interface and command line options.
 
-## 🚀 Two Ways to Use
+## 🚀 Features
 
-### Option 1: Web Interface (Recommended)
+### Multi-Platform Support
+
+- 📘 **Facebook Pages**: Post to your Facebook business pages
+- 🐦 **Twitter**: Post tweets with media attachments
+- 🔄 **Platform Toggle**: Switch between platforms in the web interface
+
+### Web Interface (Recommended)
 
 - 🌐 **Clean Web UI**: Responsive interface for easy posting
 - 📱 **Mobile Friendly**: Works on desktop, tablet, and mobile
-- ✅ **Real-time Status**: Shows live connection status to Facebook
-- 🔗 **Link Support**: Optional link attachment to posts
-- 📊 **Character Counter**: Shows remaining characters (63,206 limit)
+- ✅ **Real-time Status**: Shows live connection status for both platforms
+- 🔗 **Link Support**: Optional link attachment for Facebook posts
+- 📊 **Smart Character Counter**: Facebook (63,206) and Twitter (280) limits
 - 📂 **Smart Upload**: Upload any media file - automatically detects images or videos
 - 🖼️ **Supported Images**: PNG, JPG, JPEG, GIF, WebP
 - 🎬 **Supported Videos**: MP4, AVI, MOV, WMV, FLV, WebM, MKV
 - 👁️ **Media Preview**: Preview images and videos before posting
 - 🧹 **Auto Cleanup**: Temporary files are automatically deleted after posting
 
-### Option 2: Command Line Scripts
+### Command Line Scripts
 
 - 🖥️ **Terminal Access**: Direct execution from command line
 - ⚡ **Fast Posting**: Quick posting without browser overhead
 - 🤖 **Automation Ready**: Perfect for scripts and scheduled tasks
 - 🔧 **Customizable**: Easy to modify for specific needs
 - 📁 **Local Files**: Upload photos and videos from local filesystem
-- 🔄 **Two Options**: Main script and standalone script (nearly identical)
 
 ## 📦 Setup
 
@@ -36,14 +41,21 @@ pip install -r requirements.txt
 
 ### 2. Create Credentials File
 
-Create a `.env` file in the project directory:
+Create a `.env` file in the project directory with your API credentials:
 
 ```env
+# Facebook API credentials
 FACEBOOK_PAGE_ID=your_page_id_here
 FACEBOOK_ACCESS_TOKEN=your_access_token_here
+
+# Twitter API credentials
+TWITTER_API_KEY=your_api_key_here
+TWITTER_API_SECRET_KEY=your_api_secret_here
+TWITTER_ACCESS_TOKEN=your_access_token_here
+TWITTER_ACCESS_SECRET_TOKEN=your_access_secret_here
 ```
 
-**Important**: Never commit the `.env` file to version control!
+**🔒 Security Warning**: Never commit the `.env` file to version control! Add it to your `.gitignore` file.
 
 ## 🌐 Web Interface Usage
 
@@ -57,64 +69,91 @@ Then open your browser to: **http://localhost:5000**
 
 ### Using the Interface
 
-1. **Check Status**: Verify the green "Connected to Facebook Page" indicator
-2. **Enter Message**: Type your post content (optional if uploading media)
-3. **Upload Media** (optional):
+1. **Select Platform**: Choose Facebook or Twitter using the toggle buttons
+2. **Check Status**: Verify the green connection indicator for your selected platform
+3. **Enter Message**: Type your post content
+   - Facebook: Up to 63,206 characters
+   - Twitter: Up to 280 characters
+4. **Upload Media** (optional):
    - Click "Choose File" to select image or video
    - Preview will show automatically
-4. **Add Link** (optional): Include a URL in your post
-5. **Post**: Click "📤 Post to Facebook"
-6. **Verify**: Check your Facebook page to see the published post
+   - Twitter supports up to 4 media files
+5. **Add Link** (Facebook only): Include a URL in your post
+6. **Post**: Click the platform-specific post button
+7. **Verify**: Check your social media platform to see the published post
 
-### Supported Actions
+### Platform-Specific Features
 
-- **Text Only**: Just enter a message and post
-- **Image Post**: Upload image with optional caption
-- **Video Post**: Upload video with optional description
-- **Mixed Content**: Text + image/video + link combination
+**Facebook:**
+
+- Text + link posts
+- Single image or video uploads
+- Long-form content support
+- Link previews
+
+**Twitter:**
+
+- Tweet threads (manual)
+- Up to 4 media files per tweet
+- Hashtag and mention support
+- Character limit enforcement
 
 ## 🖥️ Command Line Usage
 
-### Main Script
+### Facebook Script
 
 ```bash
-python post_script.py
+python fb_script.py
 ```
 
 **What it does:**
 
 - Verifies Facebook credentials automatically
 - Attempts to upgrade to page access token
-- Posts a test message: "Another test post! with improvements"
+- Posts a test message
 - Shows detailed status and error messages
 
-### Standalone Script
+### Twitter Script
 
 ```bash
-python standalone_script.py
+python twitter_script.py
 ```
 
 **What it does:**
 
-- Same functionality as main script
-- Posts: "Test for standalone script!"
-- Includes commented examples for media uploads
+- Verifies Twitter API credentials
+- Posts a timestamped test tweet
+- Includes retry logic for network issues
+- Handles rate limiting automatically
+
+### Diagnostic Tool
+
+```bash
+python diagnose.py
+```
+
+**What it does:**
+
+- Tests internet connectivity
+- Verifies API endpoints are reachable
+- Validates credentials for both platforms
+- Attempts test posts to verify functionality
 
 ### Customizing Posts
 
-Edit the message in either script:
+Edit the message in the respective scripts:
 
 ```python
-# In post_script.py (line 148)
-message = poster.post("Your custom message here!")
+# In fb_script.py
+message = poster.post("Your custom Facebook message here!")
 
-# In standalone_script.py (line 148)
-message = poster.post("Your custom message here!")
+# In twitter_script.py
+success = post_tweet("Your custom tweet here!")
 ```
 
 ### Adding Media Posts
 
-Uncomment and modify these lines in either script:
+**Facebook (fb_script.py):**
 
 ```python
 # For photos
@@ -124,122 +163,192 @@ photo_success = poster.post_photo("./path/to/image.jpg", "Your photo caption")
 video_success = poster.post_video("./path/to/video.mp4", "Your video description")
 ```
 
+**Twitter (twitter_script.py):**
+
+```python
+# Single media file
+success = post_with_image("Your tweet text", "./path/to/image.jpg")
+success = post_with_video("Your tweet text", "./path/to/video.mp4")
+
+# Multiple media files
+success = post_tweet("Your tweet text", ["./image1.jpg", "./image2.jpg"])
+```
+
 ## 📁 Project Structure
 
 ```
 python script/
-├── app.py                 # Flask web application
-├── post_script.py         # Main CLI posting script
-├── standalone_script.py   # Alternative CLI script (nearly identical)
+├── app.py                 # Flask web application (main interface)
+├── fb_script.py          # Facebook API client and CLI script
+├── twitter_script.py     # Twitter API client and CLI script
+├── diagnose.py           # Diagnostic tool for troubleshooting
 ├── templates/
-│   └── index.html         # Web interface HTML template
-├── uploads/               # Temporary file storage (auto-created)
-├── .env                   # Your Facebook credentials (create this)
-├── requirements.txt       # Python dependencies
-└── README.md             # This documentation
+│   └── index.html        # Web interface HTML template
+├── uploads/              # Temporary file storage (auto-created)
+├── .env                  # Your API credentials (create this)
+├── .env.example          # Template for credentials (recommended)
+├── requirements.txt      # Python dependencies
+└── README.md            # This documentation
 ```
 
 ### Key Files Explained
 
-- **`app.py`**: Flask web server with upload handling and automatic file cleanup
-- **`post_script.py`**: Main command line script with full functionality
-- **`standalone_script.py`**: Nearly identical to post_script.py (only differs in test message)
-- **`uploads/`**: Temporary directory where web uploads are stored briefly before posting and deletion
-- **`.env`**: Your secret Facebook credentials (not included in repository)
+- **`app.py`**: Flask web server with multi-platform support and file handling
+- **`fb_script.py`**: Facebook Page posting with photo/video upload support
+- **`twitter_script.py`**: Twitter posting with media uploads and retry logic
+- **`diagnose.py`**: Comprehensive diagnostic tool for troubleshooting
+- **`uploads/`**: Temporary directory for web interface file uploads
+- **`.env`**: Your secret API credentials (not included in repository)
 
 ## 🔌 API Endpoints
 
 The web interface provides these endpoints:
 
-- `GET /` - Main posting interface
-- `POST /post` - Handle form submissions and file uploads
-- `GET /status` - JSON status check for connection health
+- `GET /` - Main posting interface with platform selection
+- `POST /post` - Handle form submissions and file uploads for both platforms
+- `GET /status` - JSON status check for both Facebook and Twitter connections
 - `GET /health` - Simple health check endpoint
 
 ## 🔒 Security & Best Practices
 
-### Token Management
+### Credential Management
+
+- **Environment Variables**: Keep all API credentials in `.env` file
+- **Version Control**: Add `.env` to `.gitignore` - never commit credentials
+- **Token Rotation**: Regularly regenerate access tokens for security
+- **Least Privilege**: Use minimum required permissions for API access
+
+### Facebook Security
 
 - **Use Page Access Tokens**: Better permissions than user tokens
-- **Token Rotation**: Regularly regenerate access tokens
-- **Environment Variables**: Never hardcode tokens in source code
-- **Git Safety**: `.env` files should be in `.gitignore`
+- **Admin Access**: Ensure you have admin access to target pages
+- **App Permissions**: Verify `pages_manage_posts` and `pages_read_engagement` permissions
+
+### Twitter Security
+
+- **API v2**: Uses modern Twitter API with proper authentication
+- **Rate Limiting**: Built-in rate limit handling and retry logic
+- **Bearer Tokens**: Secure authentication without exposing credentials
 
 ### File Handling
 
 - **Temporary Storage**: Uploaded files are deleted immediately after posting
 - **File Validation**: Only supported image/video formats are accepted
-- **Size Limits**: Follow Facebook's guidelines for media uploads
+- **Size Limits**: Respects platform guidelines for media uploads
+- **Secure Filenames**: Uses `secure_filename()` to prevent path traversal
 
 ## 🔧 Troubleshooting
 
 ### Common Issues
 
-**Connection Failed**
+**Platform Connection Failed**
 
-- Check your `.env` file exists and has correct credentials
-- Verify your Facebook access token is valid and not expired
-- Ensure you have admin access to the target Facebook page
+- Check your `.env` file exists and has correct credentials for the selected platform
+- Verify access tokens are valid and not expired
+- For Facebook: Ensure you have admin access to the target page
+- For Twitter: Verify all 4 API credentials are correctly set
 
 **Authentication Failed**
 
-- Your token may be expired - generate a new one
-- Check if your app has `pages_manage_posts` and `pages_read_engagement` permissions
-- Verify the page ID is correct
+- Regenerate expired tokens from respective developer consoles
+- Facebook: Check `pages_manage_posts` and `pages_read_engagement` permissions
+- Twitter: Verify API keys have read/write permissions
+- Ensure credentials match the correct environment (sandbox vs production)
 
 **Posts Not Appearing**
 
-- Check Facebook's community standards and posting policies
-- Verify your page is published and not restricted
-- Some content may be under review by Facebook
+- Check platform community standards and posting policies
+- Facebook: Verify page is published and not restricted
+- Twitter: Check for duplicate content restrictions
+- Some content may be under review by platform algorithms
 
 **Web Interface Issues**
 
-- Ensure Flask is installed: `pip install flask`
+- Ensure all dependencies are installed: `pip install -r requirements.txt`
 - Check if port 5000 is available or change it in `app.py`
 - Clear browser cache and cookies
+- Verify JavaScript is enabled for status checking
 
 **File Upload Problems**
 
 - Check file format is supported (see supported formats above)
-- Ensure file size is under limits
-- Verify file is not corrupted
+- Ensure file size is under platform limits
+- Twitter: Remember 4 media files maximum per tweet
+- Verify file is not corrupted or protected
+
+**Rate Limiting**
+
+- Twitter: Built-in retry logic handles rate limits automatically
+- Facebook: Reduce posting frequency if encountering limits
+- Both: Wait for reset periods before retrying failed requests
 
 ### Getting Help
 
-1. Check terminal output for detailed error messages
-2. Verify your Facebook Developer Console for app status
-3. Test with small files first before uploading large videos
-4. Use the web interface's status indicator to verify connection
+1. **Run Diagnostics**: Use `python diagnose.py` for comprehensive testing
+2. **Check Terminal Output**: Detailed error messages help identify issues
+3. **Platform Developer Consoles**:
+   - Facebook: https://developers.facebook.com/
+   - Twitter: https://developer.twitter.com/
+4. **Test Incrementally**: Start with simple text posts before trying media
+5. **Use Web Interface Status**: Real-time connection status helps debug issues
 
 ## 🎯 Quick Commands Reference
 
 ```bash
 # Setup
-pip install -r requirements.txt    # Install dependencies
+pip install -r requirements.txt    # Install all dependencies
 
 # Web Interface
 python app.py                      # Start web server (http://localhost:5000)
 
-# Command Line
-python post_script.py              # Main CLI script
-python standalone_script.py        # Alternative CLI script
+# Command Line - Facebook
+python fb_script.py                # Post to Facebook
+python fb_script.py main           # Alternative entry point
 
-# Testing
+# Command Line - Twitter
+python twitter_script.py           # Post to Twitter
+
+# Diagnostics
+python diagnose.py                 # Run comprehensive tests
+
+# Testing Endpoints
 curl http://localhost:5000/health  # Test web server health
-curl http://localhost:5000/status  # Check Facebook connection
+curl http://localhost:5000/status  # Check platform connections
 ```
 
 ## 📋 Requirements
 
 - **Python 3.7+**
 - **Internet Connection**
-- **Facebook Page Admin Access**
-- **Facebook Developer App** with appropriate permissions
+- **Platform Access**:
+  - Facebook Page Admin Access
+  - Twitter Developer Account
+- **Developer Apps**:
+  - Facebook Developer App with appropriate permissions
+  - Twitter Developer App with API v2 access
 
 ### Python Dependencies
 
-- `requests` - HTTP requests to Facebook API
-- `python-dotenv` - Environment variable management
-- `flask` - Web framework for UI
-- `werkzeug` - Secure file upload handling
+- `flask>=2.3.0,<3.0.0` - Web framework for UI
+- `requests>=2.31.0,<3.0.0` - HTTP requests to Facebook API
+- `python-dotenv>=1.0.0,<2.0.0` - Environment variable management
+- `tweepy>=4.14.0,<5.0.0` - Twitter API v2 client
+- `werkzeug>=2.3.0,<3.0.0` - Secure file upload handling
+
+## 🆕 Recent Updates
+
+### Version 2.0 Features
+
+- ✅ **Twitter Support**: Full Twitter integration with API v2
+- ✅ **Updated Dependencies**: Added `tweepy` with proper version pinning
+- ✅ **Enhanced UI**: Platform switching with real-time status
+- ✅ **Improved Security**: Better credential management and file validation
+- ✅ **Diagnostic Tools**: Comprehensive testing and troubleshooting
+- ✅ **Better Error Handling**: Retry logic and detailed error messages
+- ✅ **Multi-Media Support**: Enhanced media handling for both platforms
+
+### Breaking Changes
+
+- Old standalone scripts replaced with platform-specific modules
+- `.env` file now requires Twitter credentials for full functionality
+- Updated requirements.txt with new dependencies

@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import os
-from post_script import FacebookPoster
+from fb_script import FacebookPoster
+from twitter_script import TwitterPoster
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -31,70 +32,102 @@ def index():
 
 @app.route('/post', methods=['POST'])
 def post_message():
-    """Handle message posting with optional media"""
+    """Handle message posting with optional media for both Facebook and Twitter"""
     try:
         message = request.form.get('message', '').strip()
+        platform = request.form.get('platform', 'facebook').strip()
         link = request.form.get('link', '').strip()
-        
-        # Create poster and verify credentials
-        poster = FacebookPoster()
-        
-        if not poster.verify_token() or not poster.verify_page_access():
-            flash('Authentication failed. Check your credentials.', 'error')
-            return redirect(url_for('index'))
-        
-        # Try to get page token
-        poster.get_page_token()
         
         success = False
         
-        # Check if a file was uploaded
-        if 'media_file' in request.files and request.files['media_file'].filename != '':
-            file = request.files['media_file']
+        if platform == 'facebook':
+            # Facebook posting logic
+            poster = FacebookPoster()
             
-            # Determine file type and process accordingly
-            if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
-                # Handle image upload
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
+            if not poster.verify_token() or not poster.verify_page_access():
+                flash('Facebook authentication failed. Check your credentials.', 'error')
+                return redirect(url_for('index'))
+            
+            poster.get_page_token()
+            
+            # Handle file upload for Facebook
+            if 'media_file' in request.files and request.files['media_file'].filename != '':
+                file = request.files['media_file']
                 
-                success = poster.post_photo(filepath, message if message else None)
-                
-                # Clean up uploaded file
-                try:
-                    os.remove(filepath)
-                except:
-                    pass
+                if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(filepath)
                     
-            elif file.content_type.startswith('video/') and allowed_file(file.filename, 'video'):
-                # Handle video upload
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(UPLOAD_FOLDER, filename)
-                file.save(filepath)
-                
-                success = poster.post_video(filepath, message if message else None)
-                
-                # Clean up uploaded file
-                try:
-                    os.remove(filepath)
-                except:
-                    pass
+                    success = poster.post_photo(filepath, message if message else None)
+                    
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
+                        
+                elif file.content_type.startswith('video/') and allowed_file(file.filename, 'video'):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(filepath)
+                    
+                    success = poster.post_video(filepath, message if message else None)
+                    
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
+                else:
+                    flash('Invalid file type for Facebook. Please upload an image or video file.', 'error')
+                    return redirect(url_for('index'))
             else:
-                flash('Invalid file type. Please upload an image or video file.', 'error')
-                return redirect(url_for('index'))
-        else:
-            # No file uploaded, post text message
-            if not message:
-                flash('Please enter a message or upload a file!', 'error')
-                return redirect(url_for('index'))
+                # No file uploaded, post text message
+                if not message:
+                    flash('Please enter a message or upload a file!', 'error')
+                    return redirect(url_for('index'))
+                
+                success = poster.post(message, link if link else None)
+        
+        elif platform == 'twitter':
+            # Twitter posting logic
+            poster = TwitterPoster()
             
-            success = poster.post(message, link if link else None)
+            # Handle file upload for Twitter
+            if 'media_file' in request.files and request.files['media_file'].filename != '':
+                file = request.files['media_file']
+                
+                if (file.content_type.startswith('image/') and allowed_file(file.filename, 'image')) or \
+                   (file.content_type.startswith('video/') and allowed_file(file.filename, 'video')):
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(filepath)
+                    
+                    success = poster.post(message if message else "📎 Media post", [filepath])
+                    
+                    try:
+                        os.remove(filepath)
+                    except:
+                        pass
+                else:
+                    flash('Invalid file type for Twitter. Please upload an image or video file.', 'error')
+                    return redirect(url_for('index'))
+            else:
+                # No file uploaded, post text message
+                if not message:
+                    flash('Please enter a message!', 'error')
+                    return redirect(url_for('index'))
+                
+                success = poster.post(message)
+        
+        else:
+            flash('Invalid platform selected.', 'error')
+            return redirect(url_for('index'))
         
         if success:
-            flash('Content posted successfully!', 'success')
+            platform_name = 'Facebook' if platform == 'facebook' else 'Twitter'
+            flash(f'Content posted successfully to {platform_name}!', 'success')
         else:
-            flash('Failed to post content. Check console for details.', 'error')
+            flash(f'Failed to post content to {platform}. Check console for details.', 'error')
             
     except ValueError as e:
         flash(f'Configuration error: {e}', 'error')
@@ -105,24 +138,37 @@ def post_message():
 
 @app.route('/status')
 def status():
-    """Check connection status"""
+    """Check connection status for both platforms"""
     try:
-        poster = FacebookPoster()
-        token_valid = poster.verify_token()
-        page_access = poster.verify_page_access()
+        # Check Facebook status
+        fb_poster = FacebookPoster()
+        fb_token_valid = fb_poster.verify_token()
+        fb_page_access = fb_poster.verify_page_access()
         
-        # Get page name if we have access
-        page_name = None
-        if page_access:
-            page_result = poster._request(poster.page_id)
+        fb_page_name = None
+        if fb_page_access:
+            page_result = fb_poster._request(fb_poster.page_id)
             if page_result:
-                page_name = page_result.get('name')
+                fb_page_name = page_result.get('name')
+        
+        # Check Twitter status
+        try:
+            tw_poster = TwitterPoster()
+            # Try to authenticate to verify credentials
+            tw_valid = bool(tw_poster.client and tw_poster.api)
+        except:
+            tw_valid = False
         
         return jsonify({
-            'token_valid': token_valid,
-            'page_access': page_access,
-            'page_id': poster.page_id,
-            'page_name': page_name
+            'facebook': {
+                'token_valid': fb_token_valid,
+                'page_access': fb_page_access,
+                'page_id': fb_poster.page_id,
+                'page_name': fb_page_name
+            },
+            'twitter': {
+                'credentials_valid': tw_valid
+            }
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500

@@ -4,161 +4,168 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Socmed Poster</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              facebook: "#1877f2",
+              twitter: "#1da1f2",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body
+    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-5 flex items-center justify-center font-sans"
+  >
+    <div
+      class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
+    >
+      <div
+        class="bg-gradient-to-r from-facebook to-blue-500 text-white p-8 text-center"
+      >
+        <h1 class="text-4xl font-bold mb-3">📱 SocMed Poster</h1>
+        <p id="header-description" class="opacity-90 text-lg">
+          Post messages to your social media
+        </p>
+        <div id="status" class="mt-4 flex items-center justify-center">
+          <span class="status-indicator status-offline"></span>
+          <span>Checking connection...</span>
+        </div>
+      </div>
+
+      <div class="bg-gray-50 p-5 border-b border-gray-200">
+        <div class="flex gap-3 justify-center items-center">
+          <input
+            type="radio"
+            id="facebook"
+            name="platform"
+            value="facebook"
+            class="hidden"
+            checked
+          />
+          <label
+            for="facebook"
+            class="platform-btn facebook-btn flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all duration-300 font-semibold text-sm border-2 min-w-[120px] justify-center bg-blue-50 text-facebook border-facebook hover:scale-105 hover:shadow-lg"
+          >
+            <span class="text-base">📘</span>
+            Facebook
+          </label>
+
+          <input
+            type="radio"
+            id="twitter"
+            name="platform"
+            value="twitter"
+            class="hidden"
+          />
+          <label
+            for="twitter"
+            class="platform-btn twitter-btn flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all duration-300 font-semibold text-sm border-2 min-w-[120px] justify-center bg-sky-50 text-twitter border-twitter hover:scale-105 hover:shadow-lg"
+          >
+            <span class="text-base">🐦</span>
+            Twitter
+          </label>
+        </div>
+      </div>
+
+      <div class="p-10">
+        <div class="mb-5">
+          {% with messages = get_flashed_messages(with_categories=true) %} {% if
+          messages %} {% for category, message in messages %}
+          <div
+            class="flash {{ category }} p-4 rounded-lg mb-3 font-medium
+              {% if category == 'success' %}
+                bg-green-100 text-green-800 border border-green-200
+              {% else %}
+                bg-red-100 text-red-800 border border-red-200
+              {% endif %}"
+          >
+            {{ message }}
+          </div>
+          {% endfor %} {% endif %} {% endwith %}
+        </div>
+
+        <form
+          method="POST"
+          action="{{ url_for('post_message') }}"
+          enctype="multipart/form-data"
+          id="post-form"
+          class="space-y-6"
+        >
+          <input
+            type="hidden"
+            id="selected-platform"
+            name="platform"
+            value="facebook"
+          />
+
+          <div class="space-y-2">
+            <label
+              for="message"
+              id="message-label"
+              class="block mb-2 font-semibold text-gray-700"
+              >📝 Caption</label
+            >
+            <textarea
+              id="message"
+              name="message"
+              placeholder="What's on your mind?"
+              maxlength="63206"
+              oninput="updateCharCount()"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-colors duration-300 resize-y min-h-[120px] focus:outline-none focus:border-facebook"
+            ></textarea>
+            <div class="text-right text-sm text-gray-600 mt-1">
+              <span id="char-count">0</span> /
+              <span id="char-limit">63,206</span> characters
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label
+              for="media_file"
+              class="block mb-2 font-semibold text-gray-700"
+              >📎 Add Photo or Video (optional)</label
+            >
+            <input
+              type="file"
+              id="media_file"
+              name="media_file"
+              accept="image/*,video/*"
+              onchange="previewFile()"
+              class="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-colors duration-300 bg-white focus:outline-none focus:border-facebook"
+            />
+            <div class="text-xs text-gray-500 mt-1">
+              Supported: Images (PNG, JPG, GIF, WebP) • Videos (MP4, AVI, MOV,
+              WMV, WebM)
+            </div>
+            <div id="media-preview" class="mt-3"></div>
+          </div>
+
+          <button
+            type="submit"
+            id="submit-btn"
+            class="w-full bg-gradient-to-r from-facebook to-blue-500 text-white border-none p-4 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 flex items-center justify-center gap-2"
+          >
+            <span id="submit-icon">📘</span>
+            <span id="submit-text">Post to Facebook</span>
+          </button>
+        </form>
+      </div>
+
+      <div
+        class="text-center p-5 text-gray-600 text-sm border-t border-gray-100"
+      >
+        Made with ❤️ using Flask • Check your social media to see posts
+      </div>
+    </div>
+
+    <!-- Custom styles for status indicators and platform switching -->
     <style>
-      * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-      }
-
-      body {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
-          sans-serif;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        min-height: 100vh;
-        padding: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      }
-
-      .container {
-        width: 100%;
-        max-width: 600px;
-        background: white;
-        border-radius: 15px;
-        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-      }
-
-      .header {
-        background: linear-gradient(45deg, #1877f2, #42a5f5);
-        color: white;
-        padding: 30px;
-        text-align: center;
-      }
-
-      .header h1 {
-        font-size: 2.5em;
-        margin-bottom: 10px;
-      }
-
-      .header p {
-        opacity: 0.9;
-        font-size: 1.1em;
-      }
-
-      .content {
-        padding: 40px;
-      }
-
-      .form-group {
-        margin-bottom: 25px;
-      }
-
-      label {
-        display: block;
-        margin-bottom: 8px;
-        font-weight: 600;
-        color: #333;
-      }
-
-      textarea,
-      input[type="url"],
-      select,
-      input[type="file"] {
-        width: 100%;
-        padding: 15px;
-        border: 2px solid #e1e5e9;
-        border-radius: 10px;
-        font-size: 16px;
-        transition: border-color 0.3s ease;
-        resize: vertical;
-        background: white;
-      }
-
-      textarea:focus,
-      input[type="url"]:focus,
-      select:focus,
-      input[type="file"]:focus {
-        outline: none;
-        border-color: #1877f2;
-      }
-
-      .file-info {
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
-      }
-
-      .preview-container {
-        margin-top: 10px;
-        text-align: center;
-      }
-
-      .preview-image {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 10px;
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      }
-
-      .preview-video {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 10px;
-      }
-
-      textarea {
-        min-height: 120px;
-        font-family: inherit;
-      }
-
-      .btn {
-        background: linear-gradient(45deg, #1877f2, #42a5f5);
-        color: white;
-        border: none;
-        padding: 15px 30px;
-        border-radius: 10px;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        width: 100%;
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-      }
-
-      .btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 20px rgba(24, 119, 242, 0.3);
-      }
-
-      .btn:active {
-        transform: translateY(0);
-      }
-
-      .flash-messages {
-        margin-bottom: 20px;
-      }
-
-      .flash {
-        padding: 15px;
-        border-radius: 10px;
-        margin-bottom: 10px;
-        font-weight: 500;
-      }
-
-      .flash.success {
-        background: #d4edda;
-        color: #155724;
-        border: 1px solid #c3e6cb;
-      }
-
-      .flash.error {
-        background: #f8d7da;
-        color: #721c24;
-        border: 1px solid #f5c6cb;
-      }
-
       .status-indicator {
         display: inline-block;
         width: 12px;
@@ -168,128 +175,109 @@
       }
 
       .status-online {
-        background: #28a745;
-        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+        background: #10b981;
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
       }
 
       .status-offline {
-        background: #dc3545;
-        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+        background: #ef4444;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
       }
 
-      .footer {
+      /* Platform switching styles */
+      input[type="radio"]:checked + .facebook-btn {
+        background-color: #1877f2 !important;
+        color: white !important;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      input[type="radio"]:checked + .twitter-btn {
+        background-color: #1da1f2 !important;
+        color: white !important;
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+      }
+
+      /* Preview styles */
+      .preview-container {
+        margin-top: 12px;
         text-align: center;
-        padding: 20px;
-        color: #666;
-        font-size: 14px;
       }
 
-      .char-count {
-        text-align: right;
-        font-size: 12px;
-        color: #666;
-        margin-top: 5px;
+      .preview-image {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
-      @media (max-width: 768px) {
-        .container {
-          margin: 10px;
-          border-radius: 10px;
-        }
-
-        .header {
-          padding: 20px;
-        }
-
-        .header h1 {
-          font-size: 2em;
-        }
-
-        .content {
-          padding: 20px;
-        }
+      .preview-video {
+        max-width: 100%;
+        max-height: 200px;
+        border-radius: 8px;
       }
     </style>
-  </head>
-  <body>
-    <div class="container">
-      <div class="header">
-        <h1>📱 SocMed Poster</h1>
-        <p>Post messages to your Facebook page</p>
-        <div id="status" style="margin-top: 15px">
-          <span class="status-indicator status-offline"></span>
-          <span>Checking connection...</span>
-        </div>
-      </div>
-
-      <div class="content">
-        <div class="flash-messages">
-          {% with messages = get_flashed_messages(with_categories=true) %} {% if
-          messages %} {% for category, message in messages %}
-          <div class="flash {{ category }}">{{ message }}</div>
-          {% endfor %} {% endif %} {% endwith %}
-        </div>
-
-        <form
-          method="POST"
-          action="{{ url_for('post_message') }}"
-          enctype="multipart/form-data"
-        >
-          <div class="form-group">
-            <label for="message" id="message-label">📝 Caption</label>
-            <textarea
-              id="message"
-              name="message"
-              placeholder="What's on your mind?"
-              maxlength="63206"
-              oninput="updateCharCount()"
-            ></textarea>
-            <div class="char-count">
-              <span id="char-count">0</span> / 63,206 characters
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="media_file">📎 Add Photo or Video (optional)</label>
-            <input
-              type="file"
-              id="media_file"
-              name="media_file"
-              accept="image/*,video/*"
-              onchange="previewFile()"
-            />
-            <div class="file-info">
-              Supported: Images (PNG, JPG, GIF, WebP) • Videos (MP4, AVI, MOV,
-              WMV, WebM)
-            </div>
-            <div id="media-preview"></div>
-          </div>
-
-          <!-- <div class="form-group">
-            <label for="link">🔗 Link (optional)</label>
-            <input
-              type="url"
-              id="link"
-              name="link"
-              placeholder="https://example.com"
-            />
-          </div> -->
-
-          <button type="submit" class="btn">Post to Facebook</button>
-        </form>
-      </div>
-
-      <div class="footer">
-        Made with ❤️ using Flask • Check your Facebook page to see posts
-      </div>
-    </div>
 
     <script>
+      // Platform switching functionality
+      function switchPlatform(platform) {
+        const facebookBtn = document.querySelector('label[for="facebook"]');
+        const twitterBtn = document.querySelector('label[for="twitter"]');
+        const submitBtn = document.getElementById("submit-btn");
+        const submitIcon = document.getElementById("submit-icon");
+        const submitText = document.getElementById("submit-text");
+        const hiddenInput = document.getElementById("selected-platform");
+        const headerDesc = document.getElementById("header-description");
+        const messageTextarea = document.getElementById("message");
+        const charLimit = document.getElementById("char-limit");
+
+        if (platform === "facebook") {
+          submitIcon.textContent = "📘";
+          submitText.textContent = "Post to Facebook";
+          submitBtn.style.background =
+            "linear-gradient(45deg, #1877f2, #42a5f5)";
+          headerDesc.textContent = "Post messages to your Facebook page";
+          messageTextarea.maxLength = 63206;
+          charLimit.textContent = "63,206";
+          messageTextarea.placeholder = "What's on your mind?";
+        } else {
+          submitIcon.textContent = "🐦";
+          submitText.textContent = "Post to Twitter";
+          submitBtn.style.background =
+            "linear-gradient(45deg, #1da1f2, #1991db)";
+          headerDesc.textContent = "Post tweets to your Twitter account";
+          messageTextarea.maxLength = 280;
+          charLimit.textContent = "280";
+          messageTextarea.placeholder = "What's happening?";
+        }
+
+        hiddenInput.value = platform;
+        updateCharCount();
+      }
+
       // Update character count
       function updateCharCount() {
         const textarea = document.getElementById("message");
         const charCount = document.getElementById("char-count");
-        charCount.textContent = textarea.value.length;
+        const currentLength = textarea.value.length;
+        const platform = document.getElementById("selected-platform").value;
+        const maxLength = platform === "facebook" ? 63206 : 280;
+
+        charCount.textContent = currentLength;
+
+        // Color coding for Twitter character limit
+        if (platform === "twitter") {
+          if (currentLength > 280) {
+            charCount.style.color = "#dc3545";
+          } else if (currentLength > 250) {
+            charCount.style.color = "#ffc107";
+          } else {
+            charCount.style.color = "#666";
+          }
+        } else {
+          charCount.style.color = "#666";
+        }
       }
 
       // Preview uploaded files
@@ -349,29 +337,60 @@
           const response = await fetch("/status");
           const data = await response.json();
           const statusElement = document.getElementById("status");
+          const currentPlatform =
+            document.getElementById("selected-platform").value;
 
-          if (data.token_valid && data.page_access) {
-            statusElement.innerHTML = `
-                        <span class="status-indicator status-online"></span>
-                        <span>Connected to Facebook Page: ${data.page_name}</span>
-                    `;
+          if (currentPlatform === "facebook") {
+            if (data.facebook.token_valid && data.facebook.page_access) {
+              statusElement.innerHTML = `
+                <span class="status-indicator status-online"></span>
+                <span>Connected to Facebook Page: ${data.facebook.page_name}</span>
+              `;
+            } else {
+              statusElement.innerHTML = `
+                <span class="status-indicator status-offline"></span>
+                <span>Facebook connection failed - Check credentials</span>
+              `;
+            }
           } else {
-            statusElement.innerHTML = `
-                        <span class="status-indicator status-offline"></span>
-                        <span>Connection failed - Check credentials</span>
-                    `;
+            if (data.twitter.credentials_valid) {
+              statusElement.innerHTML = `
+                <span class="status-indicator status-online"></span>
+                <span>Connected to Twitter</span>
+              `;
+            } else {
+              statusElement.innerHTML = `
+                <span class="status-indicator status-offline"></span>
+                <span>Twitter connection failed - Check credentials</span>
+              `;
+            }
           }
         } catch (error) {
           const statusElement = document.getElementById("status");
           statusElement.innerHTML = `
-                    <span class="status-indicator status-offline"></span>
-                    <span>Unable to check status</span>
-                `;
+            <span class="status-indicator status-offline"></span>
+            <span>Unable to check status</span>
+          `;
         }
       }
 
+      // Platform toggle event listeners
+      document.addEventListener("DOMContentLoaded", function () {
+        const platformRadios = document.querySelectorAll(
+          'input[name="platform"]'
+        );
+
+        platformRadios.forEach((radio) => {
+          radio.addEventListener("change", function () {
+            switchPlatform(this.value);
+            checkStatus();
+          });
+        });
+      });
+
       // Check status when page loads
       window.onload = function () {
+        switchPlatform("facebook"); // Initialize with Facebook
         checkStatus();
         updateCharCount();
       };
