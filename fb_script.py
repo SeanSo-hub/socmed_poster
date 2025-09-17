@@ -32,11 +32,20 @@ class FacebookPoster:
             return response.json()
         except requests.RequestException:
             error = response.json().get("error", {}) if response.content else {}
-            print(f"❌ Error {error.get('code', '')}: {error.get('message', 'Request failed')}")
+            error_code = error.get('code', '')
+            error_message = error.get('message', 'Request failed')
+            
+            # Handle specific error cases
+            if error_code == 190:
+                print(f"❌ Facebook token expired: {error_message}")
+                print("💡 Please refresh your Facebook access token in your .env file")
+            else:
+                print(f"❌ Facebook API Error {error_code}: {error_message}")
             return None
     
     def verify_token(self) -> bool:
         """Verify access token validity"""
+        print("🔍 Checking Facebook connection...")
         result = self._request("me")
         if result:
             print(f"✅ Token verified: {result.get('name')}")
@@ -45,6 +54,7 @@ class FacebookPoster:
     
     def verify_page_access(self) -> bool:
         """Verify page access"""
+        print("🔍 Checking Facebook page access...")
         result = self._request(self.page_id)
         if result:
             print(f"✅ Page verified: {result.get('name')}")

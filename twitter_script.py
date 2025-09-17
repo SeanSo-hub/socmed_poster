@@ -37,6 +37,7 @@ class TwitterPoster:
     
     def verify_credentials(self) -> bool:
         """Verify Twitter API credentials are working"""
+        print("🔍 Checking Twitter connection...")
         try:
             me = self.client.get_me()  # Removed invalid timeout parameter
             if me.data:
@@ -45,6 +46,38 @@ class TwitterPoster:
         except Exception as e:
             print(f"❌ Twitter credential verification failed: {e}")
         return False
+    
+    def get_username(self) -> Optional[str]:
+        """Get the authenticated user's Twitter username.
+
+        Strategy:
+        - Try Twitter API v2 `get_me()` with retries for transient errors
+        - If that fails, fall back to v1.1 `api.verify_credentials()` to obtain `screen_name`
+        - Handle connection resets gracefully and return None if unavailable
+        """
+        # Try v2 client.get_me() with retry logic (silent failures)
+        for attempt in range(3):
+            try:
+                me = self.client.get_me()
+                if me and getattr(me, 'data', None):
+                    return me.data.username
+                break
+            except (requests.exceptions.ConnectionError, ConnectionResetError, requests.exceptions.Timeout):
+                time.sleep(2 * (attempt + 1))
+                continue
+            except Exception:
+                break
+
+        # Fallback to v1.1 API (verify_credentials) which returns screen_name (silent)
+        try:
+            user = self.api.verify_credentials()
+            if user and getattr(user, 'screen_name', None):
+                return user.screen_name
+        except Exception:
+            pass
+
+        # Nothing worked
+        return None
     
     def _retry_operation(self, operation, *args, max_retries=3, operation_name="operation"):
         """Enhanced retry logic with better error handling"""
@@ -168,8 +201,13 @@ def post_tweet(message: str, media_files: Optional[List[str]] = None) -> bool:
     """Post a tweet with optional media"""
     try:
         poster = TwitterPoster()
-        if not poster.verify_credentials():
+        verified = poster.verify_credentials()
+        if not verified:
+            print("❌ Twitter credentials verification failed. Aborting post.")
             return False
+
+        # print positive confirmation before attempting uploads/posts
+        print("✅ Twitter credentials verified — proceeding to post.")
         return poster.post(message, media_files)
     except Exception as e:
         print(f"❌ Failed to create TwitterPoster: {e}")

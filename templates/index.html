@@ -3,404 +3,276 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Socmed Poster</title>
-    <!-- Tailwind CSS CDN -->
+    <title>SocMed Poster</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              facebook: "#1877f2",
-              twitter: "#1da1f2",
-            },
-          },
-        },
-      };
-    </script>
   </head>
-  <body
-    class="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 p-5 flex items-center justify-center font-sans"
-  >
-    <div
-      class="w-full max-w-2xl bg-white rounded-2xl shadow-2xl overflow-hidden"
-    >
+  <body class="bg-gray-100 p-5">
+    <div class="max-w-3xl mx-auto bg-white p-5 rounded-lg shadow-lg">
+      <h1 class="text-2xl font-bold text-gray-800 mb-5">SocMed Poster</h1>
+
+      <!-- Flash messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %} {% if
+      messages %} {% for category, message in messages %}
       <div
-        class="bg-gradient-to-r from-facebook to-blue-500 text-white p-8 text-center"
+        class="p-3 mb-4 rounded-md {% if category == 'success' %}bg-green-100 text-green-800 border border-green-200{% else %}bg-red-100 text-red-800 border border-red-200{% endif %}"
       >
-        <h1 class="text-4xl font-bold mb-3">📱 SocMed Poster</h1>
-        <p id="header-description" class="opacity-90 text-lg">
-          Post messages to your social media
-        </p>
-        <div id="status" class="mt-4 flex items-center justify-center">
-          <span class="status-indicator status-offline"></span>
-          <span>Checking connection...</span>
-        </div>
+        {{ message }}
       </div>
+      {% endfor %} {% endif %} {% endwith %}
 
-      <div class="bg-gray-50 p-5 border-b border-gray-200">
-        <div class="flex gap-3 justify-center items-center">
-          <input
-            type="radio"
-            id="facebook"
-            name="platform"
-            value="facebook"
-            class="hidden"
-            checked
-          />
-          <label
-            for="facebook"
-            class="platform-btn facebook-btn flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all duration-300 font-semibold text-sm border-2 min-w-[120px] justify-center bg-blue-50 text-facebook border-facebook hover:scale-105 hover:shadow-lg"
-          >
-            <span class="text-base">📘</span>
-            Facebook
-          </label>
+      <form
+        id="post-form"
+        method="POST"
+        action="{{ url_for('post_message') }}"
+        enctype="multipart/form-data"
+      >
+        <input
+          type="hidden"
+          id="selected-platform"
+          name="platform"
+          value="facebook"
+        />
 
-          <input
-            type="radio"
-            id="twitter"
-            name="platform"
-            value="twitter"
-            class="hidden"
-          />
-          <label
-            for="twitter"
-            class="platform-btn twitter-btn flex items-center gap-2 px-6 py-3 rounded-full cursor-pointer transition-all duration-300 font-semibold text-sm border-2 min-w-[120px] justify-center bg-sky-50 text-twitter border-twitter hover:scale-105 hover:shadow-lg"
-          >
-            <span class="text-base">🐦</span>
-            Twitter
-          </label>
-        </div>
-      </div>
-
-      <div class="p-10">
-        <div class="mb-5">
-          {% with messages = get_flashed_messages(with_categories=true) %} {% if
-          messages %} {% for category, message in messages %}
-          <div
-            class="flash {{ category }} p-4 rounded-lg mb-3 font-medium
-              {% if category == 'success' %}
-                bg-green-100 text-green-800 border border-green-200
-              {% else %}
-                bg-red-100 text-red-800 border border-red-200
-              {% endif %}"
-          >
-            {{ message }}
-          </div>
-          {% endfor %} {% endif %} {% endwith %}
-        </div>
-
-        <form
-          method="POST"
-          action="{{ url_for('post_message') }}"
-          enctype="multipart/form-data"
-          id="post-form"
-          class="space-y-6"
+        <div
+          class="flex mb-5 border border-gray-300 rounded-md overflow-hidden"
         >
-          <input
-            type="hidden"
-            id="selected-platform"
-            name="platform"
-            value="facebook"
-          />
-
-          <div class="space-y-2">
-            <label
-              for="message"
-              id="message-label"
-              class="block mb-2 font-semibold text-gray-700"
-              >📝 Caption</label
-            >
-            <textarea
-              id="message"
-              name="message"
-              placeholder="What's on your mind?"
-              maxlength="63206"
-              oninput="updateCharCount()"
-              class="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-colors duration-300 resize-y min-h-[120px] focus:outline-none focus:border-facebook"
-            ></textarea>
-            <div class="text-right text-sm text-gray-600 mt-1">
-              <span id="char-count">0</span> /
-              <span id="char-limit">63,206</span> characters
-            </div>
-          </div>
-
-          <div class="space-y-2">
-            <label
-              for="media_file"
-              class="block mb-2 font-semibold text-gray-700"
-              >📎 Add Photo or Video (optional)</label
-            >
-            <input
-              type="file"
-              id="media_file"
-              name="media_file"
-              accept="image/*,video/*"
-              onchange="previewFile()"
-              class="w-full p-4 border-2 border-gray-200 rounded-xl text-base transition-colors duration-300 bg-white focus:outline-none focus:border-facebook"
-            />
-            <div class="text-xs text-gray-500 mt-1">
-              Supported: Images (PNG, JPG, GIF, WebP) • Videos (MP4, AVI, MOV,
-              WMV, WebM)
-            </div>
-            <div id="media-preview" class="mt-3"></div>
-          </div>
-
           <button
-            type="submit"
+            type="button"
+            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100 active"
+            data-platform="facebook"
+            onclick="switchPlatform('facebook')"
+          >
+            📘 Facebook
+          </button>
+          <button
+            type="button"
+            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100"
+            data-platform="twitter"
+            onclick="switchPlatform('twitter')"
+          >
+            🐦 Twitter
+          </button>
+          <button
+            type="button"
+            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100"
+            data-platform="instagram"
+            onclick="switchPlatform('instagram')"
+          >
+            📸 Instagram
+          </button>
+        </div>
+
+        <div class="mb-4">
+          <label for="message" class="block mb-2 font-semibold text-gray-600"
+            >Caption</label
+          >
+          <textarea
+            id="message"
+            name="message"
+            placeholder="Write your message..."
+            oninput="updateCharCount()"
+            class="w-full p-3 border border-gray-300 rounded-md min-h-[100px] resize-y"
+          ></textarea>
+          <div class="text-right text-xs text-gray-500 mt-1">
+            <span id="char-count">0</span> /
+            <span id="char-limit">63,206</span> characters
+          </div>
+        </div>
+
+        <div class="mb-4">
+          <label for="media_file" class="block mb-2 font-semibold text-gray-600"
+            >Photo or Video</label
+          >
+          <input
+            id="media_file"
+            name="media_file"
+            type="file"
+            accept="image/*,video/*"
+            onchange="previewFile()"
+            class="w-full p-3 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        <div class="mb-4">
+          <label for="image_url" class="block mb-2 font-semibold text-gray-600"
+            >Image URL (optional)</label
+          >
+          <input
+            id="image_url"
+            name="link"
+            type="text"
+            placeholder="https://..."
+            oninput="previewFromUrl()"
+            class="w-full p-3 border border-gray-300 rounded-md"
+          />
+        </div>
+
+        <div
+          id="media-preview"
+          class="[&>img]:max-w-full [&>img]:rounded-md [&>img]:mt-3 [&>video]:max-w-full [&>video]:rounded-md [&>video]:mt-3"
+        ></div>
+
+        <div class="flex gap-3 sm:flex-row flex-col">
+          <button
             id="submit-btn"
-            class="w-full bg-gradient-to-r from-facebook to-blue-500 text-white border-none p-4 rounded-xl text-base font-semibold cursor-pointer transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 flex items-center justify-center gap-2"
+            class="px-5 py-3 bg-blue-500 text-white rounded-md cursor-pointer font-medium hover:bg-blue-600"
+            type="submit"
           >
             <span id="submit-icon">📘</span>
             <span id="submit-text">Post to Facebook</span>
           </button>
-        </form>
-      </div>
+          <button
+            type="button"
+            class="px-5 py-3 bg-gray-500 text-white rounded-md cursor-pointer font-medium hover:bg-gray-600"
+            onclick="resetForm()"
+          >
+            Reset
+          </button>
+        </div>
+      </form>
 
       <div
-        class="text-center p-5 text-gray-600 text-sm border-t border-gray-100"
+        id="status"
+        class="p-3 rounded-md text-sm mt-5 bg-yellow-100 text-yellow-800 border border-yellow-200"
       >
-        Made with ❤️ using Flask • Check your social media to see posts
+        Checking connection...
       </div>
     </div>
 
-    <!-- Custom styles for status indicators and platform switching -->
-    <style>
-      .status-indicator {
-        display: inline-block;
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        margin-right: 8px;
-      }
-
-      .status-online {
-        background: #10b981;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
-      }
-
-      .status-offline {
-        background: #ef4444;
-        box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
-      }
-
-      /* Platform switching styles */
-      input[type="radio"]:checked + .facebook-btn {
-        background-color: #1877f2 !important;
-        color: white !important;
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      }
-
-      input[type="radio"]:checked + .twitter-btn {
-        background-color: #1da1f2 !important;
-        color: white !important;
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
-      }
-
-      /* Preview styles */
-      .preview-container {
-        margin-top: 12px;
-        text-align: center;
-      }
-
-      .preview-image {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 8px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      }
-
-      .preview-video {
-        max-width: 100%;
-        max-height: 200px;
-        border-radius: 8px;
-      }
-    </style>
-
     <script>
-      // Platform switching functionality
       function switchPlatform(platform) {
-        const facebookBtn = document.querySelector('label[for="facebook"]');
-        const twitterBtn = document.querySelector('label[for="twitter"]');
-        const submitBtn = document.getElementById("submit-btn");
-        const submitIcon = document.getElementById("submit-icon");
-        const submitText = document.getElementById("submit-text");
-        const hiddenInput = document.getElementById("selected-platform");
-        const headerDesc = document.getElementById("header-description");
-        const messageTextarea = document.getElementById("message");
-        const charLimit = document.getElementById("char-limit");
+        document.getElementById("selected-platform").value = platform;
+        document.querySelectorAll(".tab").forEach((tab) => {
+          if (tab.dataset.platform === platform) {
+            tab.classList.add("bg-blue-500", "text-white");
+            tab.classList.remove("bg-gray-50", "hover:bg-gray-100");
+          } else {
+            tab.classList.remove("bg-blue-500", "text-white");
+            tab.classList.add("bg-gray-50", "hover:bg-gray-100");
+          }
+        });
+
+        const icon = document.getElementById("submit-icon");
+        const text = document.getElementById("submit-text");
+        const limit = document.getElementById("char-limit");
+        const textarea = document.getElementById("message");
 
         if (platform === "facebook") {
-          submitIcon.textContent = "📘";
-          submitText.textContent = "Post to Facebook";
-          submitBtn.style.background =
-            "linear-gradient(45deg, #1877f2, #42a5f5)";
-          headerDesc.textContent = "Post messages to your Facebook page";
-          messageTextarea.maxLength = 63206;
-          charLimit.textContent = "63,206";
-          messageTextarea.placeholder = "What's on your mind?";
-        } else {
-          submitIcon.textContent = "🐦";
-          submitText.textContent = "Post to Twitter";
-          submitBtn.style.background =
-            "linear-gradient(45deg, #1da1f2, #1991db)";
-          headerDesc.textContent = "Post tweets to your Twitter account";
-          messageTextarea.maxLength = 280;
-          charLimit.textContent = "280";
-          messageTextarea.placeholder = "What's happening?";
+          icon.textContent = "📘";
+          text.textContent = "Post to Facebook";
+          limit.textContent = "63,206";
+          textarea.maxLength = 63206;
+        } else if (platform === "twitter") {
+          icon.textContent = "🐦";
+          text.textContent = "Post to Twitter";
+          limit.textContent = "280";
+          textarea.maxLength = 280;
+        } else if (platform === "instagram") {
+          icon.textContent = "📸";
+          text.textContent = "Post to Instagram";
+          limit.textContent = "2,200";
+          textarea.maxLength = 2200;
         }
-
-        hiddenInput.value = platform;
         updateCharCount();
+        checkStatus();
       }
 
-      // Update character count
       function updateCharCount() {
         const textarea = document.getElementById("message");
-        const charCount = document.getElementById("char-count");
-        const currentLength = textarea.value.length;
+        const counter = document.getElementById("char-count");
+        const length = textarea.value.length;
+        counter.textContent = length;
+
         const platform = document.getElementById("selected-platform").value;
-        const maxLength = platform === "facebook" ? 63206 : 280;
-
-        charCount.textContent = currentLength;
-
-        // Color coding for Twitter character limit
         if (platform === "twitter") {
-          if (currentLength > 280) {
-            charCount.style.color = "#dc3545";
-          } else if (currentLength > 250) {
-            charCount.style.color = "#ffc107";
-          } else {
-            charCount.style.color = "#666";
-          }
+          counter.className =
+            length > 280
+              ? "text-red-500"
+              : length > 250
+              ? "text-yellow-500"
+              : "text-gray-500";
         } else {
-          charCount.style.color = "#666";
+          counter.className = "text-gray-500";
         }
       }
 
-      // Preview uploaded files
       function previewFile() {
-        const fileInput = document.getElementById("media_file");
-        const previewDiv = document.getElementById("media-preview");
-        const file = fileInput.files[0];
-
-        if (file) {
-          const reader = new FileReader();
-          const isImage = file.type.startsWith("image/");
-          const isVideo = file.type.startsWith("video/");
-
-          reader.onload = function (e) {
-            if (isImage) {
-              previewDiv.innerHTML = `
-                <div class="preview-container">
-                  <img src="${
-                    e.target.result
-                  }" alt="Preview" class="preview-image">
-                  <div class="file-info">📷 ${file.name} (${(
-                file.size /
-                1024 /
-                1024
-              ).toFixed(2)} MB)</div>
-                </div>
-              `;
-            } else if (isVideo) {
-              previewDiv.innerHTML = `
-                <div class="preview-container">
-                  <video controls class="preview-video">
-                    <source src="${e.target.result}" type="${file.type}">
-                    Your browser does not support the video tag.
-                  </video>
-                  <div class="file-info">🎬 ${file.name} (${(
-                file.size /
-                1024 /
-                1024
-              ).toFixed(2)} MB)</div>
-                </div>
-              `;
-            } else {
-              previewDiv.innerHTML = `
-                <div class="file-info">❌ Unsupported file type: ${file.type}</div>
-              `;
-            }
-          };
-          reader.readAsDataURL(file);
-        } else {
-          previewDiv.innerHTML = "";
+        const file = document.getElementById("media_file").files[0];
+        const preview = document.getElementById("media-preview");
+        document.getElementById("image_url").value = "";
+        if (!file) {
+          preview.innerHTML = "";
+          return;
         }
-      }
 
-      // Check connection status
-      async function checkStatus() {
-        try {
-          const response = await fetch("/status");
-          const data = await response.json();
-          const statusElement = document.getElementById("status");
-          const currentPlatform =
-            document.getElementById("selected-platform").value;
-
-          if (currentPlatform === "facebook") {
-            if (data.facebook.token_valid && data.facebook.page_access) {
-              statusElement.innerHTML = `
-                <span class="status-indicator status-online"></span>
-                <span>Connected to Facebook Page: ${data.facebook.page_name}</span>
-              `;
-            } else {
-              statusElement.innerHTML = `
-                <span class="status-indicator status-offline"></span>
-                <span>Facebook connection failed - Check credentials</span>
-              `;
-            }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (file.type.startsWith("image/")) {
+            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
           } else {
-            if (data.twitter.credentials_valid) {
-              statusElement.innerHTML = `
-                <span class="status-indicator status-online"></span>
-                <span>Connected to Twitter</span>
-              `;
-            } else {
-              statusElement.innerHTML = `
-                <span class="status-indicator status-offline"></span>
-                <span>Twitter connection failed - Check credentials</span>
-              `;
-            }
+            preview.innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
           }
-        } catch (error) {
-          const statusElement = document.getElementById("status");
-          statusElement.innerHTML = `
-            <span class="status-indicator status-offline"></span>
-            <span>Unable to check status</span>
-          `;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function previewFromUrl() {
+        const url = document.getElementById("image_url").value.trim();
+        const preview = document.getElementById("media-preview");
+        if (document.getElementById("media_file").files.length > 0) return;
+        preview.innerHTML = url ? `<img src="${url}" alt="Preview">` : "";
+      }
+
+      async function checkStatus() {
+        const statusEl = document.getElementById("status");
+        const platform = document.getElementById("selected-platform").value;
+
+        // Set checking status with yellow background
+        statusEl.textContent = "Checking connection...";
+        statusEl.className =
+          "p-3 rounded-md text-sm mt-5 bg-yellow-100 text-yellow-800 border border-yellow-200";
+
+        try {
+          const res = await fetch(`/status?platform=${platform}`);
+          const data = await res.json();
+
+          const ok =
+            (platform === "facebook" &&
+              data.facebook?.token_valid &&
+              data.facebook?.page_access) ||
+            (platform === "twitter" && data.twitter?.credentials_valid) ||
+            (platform === "instagram" &&
+              data.instagram?.token_valid &&
+              data.instagram?.account_access);
+
+          statusEl.textContent = ok
+            ? `✓ Connected to ${platform}`
+            : `✗ Connection failed`;
+
+          if (ok) {
+            statusEl.className =
+              "p-3 rounded-md text-sm mt-5 bg-green-100 text-green-800 border border-green-200";
+          } else {
+            statusEl.className =
+              "p-3 rounded-md text-sm mt-5 bg-red-100 text-red-800 border border-red-200";
+          }
+        } catch {
+          statusEl.textContent = "✗ Unable to check status";
+          statusEl.className =
+            "p-3 rounded-md text-sm mt-5 bg-red-100 text-red-800 border border-red-200";
         }
       }
 
-      // Platform toggle event listeners
-      document.addEventListener("DOMContentLoaded", function () {
-        const platformRadios = document.querySelectorAll(
-          'input[name="platform"]'
-        );
-
-        platformRadios.forEach((radio) => {
-          radio.addEventListener("change", function () {
-            switchPlatform(this.value);
-            checkStatus();
-          });
-        });
-      });
-
-      // Check status when page loads
-      window.onload = function () {
-        switchPlatform("facebook"); // Initialize with Facebook
-        checkStatus();
+      function resetForm() {
+        document.getElementById("post-form").reset();
+        document.getElementById("media-preview").innerHTML = "";
         updateCharCount();
-      };
+      }
 
-      // Auto-resize textarea
-      const textarea = document.getElementById("message");
-      textarea.addEventListener("input", function () {
-        this.style.height = "auto";
-        this.style.height = Math.min(this.scrollHeight, 300) + "px";
-      });
+      // Initialize
+      switchPlatform("facebook");
+      checkStatus();
+      updateCharCount();
     </script>
   </body>
 </html>
