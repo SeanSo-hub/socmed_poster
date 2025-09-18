@@ -30,7 +30,7 @@
           type="hidden"
           id="selected-platform"
           name="platform"
-          value="facebook"
+          value="{{ selected_platform | default('facebook') }}"
         />
 
         <div
@@ -89,8 +89,15 @@
             type="file"
             accept="image/*,video/*"
             onchange="previewFile()"
+            multiple
             class="w-full p-3 border border-gray-300 rounded-md"
           />
+          <div class="text-xs text-gray-500 mt-1">
+            <strong>Facebook:</strong> Up to 10 images or 1 video per post<br />
+            <strong>Twitter:</strong> Up to 4 images/videos per tweet<br />
+            <strong>Instagram:</strong> Up to 10 images per carousel (images
+            only)
+          </div>
         </div>
 
         <div class="mb-4">
@@ -141,7 +148,16 @@
 
     <script>
       function switchPlatform(platform) {
+        console.debug("switchPlatform called. target platform=", platform);
+        console.debug(
+          "hidden before=",
+          document.getElementById("selected-platform").value
+        );
         document.getElementById("selected-platform").value = platform;
+        console.debug(
+          "hidden after=",
+          document.getElementById("selected-platform").value
+        );
         document.querySelectorAll(".tab").forEach((tab) => {
           if (tab.dataset.platform === platform) {
             tab.classList.add("bg-blue-500", "text-white");
@@ -156,22 +172,29 @@
         const text = document.getElementById("submit-text");
         const limit = document.getElementById("char-limit");
         const textarea = document.getElementById("message");
+        const fileInput = document.getElementById("media_file");
 
         if (platform === "facebook") {
           icon.textContent = "📘";
           text.textContent = "Post to Facebook";
           limit.textContent = "63,206";
           textarea.maxLength = 63206;
+          fileInput.multiple = true; // Allow multiple files for Facebook
+          fileInput.accept = "image/*,video/*";
         } else if (platform === "twitter") {
           icon.textContent = "🐦";
           text.textContent = "Post to Twitter";
           limit.textContent = "280";
           textarea.maxLength = 280;
+          fileInput.multiple = true; // Twitter already supports multiple files
+          fileInput.accept = "image/*,video/*";
         } else if (platform === "instagram") {
           icon.textContent = "📸";
           text.textContent = "Post to Instagram";
           limit.textContent = "2,200";
           textarea.maxLength = 2200;
+          fileInput.multiple = true; // Instagram supports multiple images
+          fileInput.accept = "image/*"; // Instagram only accepts images
         }
         updateCharCount();
         checkStatus();
@@ -197,23 +220,93 @@
       }
 
       function previewFile() {
-        const file = document.getElementById("media_file").files[0];
+        const fileInput = document.getElementById("media_file");
+        const files = fileInput.files;
         const preview = document.getElementById("media-preview");
+        const platform = document.getElementById("selected-platform").value;
+
         document.getElementById("image_url").value = "";
-        if (!file) {
+
+        if (!files || files.length === 0) {
           preview.innerHTML = "";
           return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          if (file.type.startsWith("image/")) {
-            preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-          } else {
-            preview.innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
+        // Handle multiple files
+        if (files.length > 1) {
+          preview.innerHTML = "";
+
+          // Check platform-specific limits
+          let maxFiles, errorMessage;
+          if (platform === "facebook") {
+            maxFiles = 10;
+            errorMessage = "Facebook allows maximum 10 files per post.";
+          } else if (platform === "instagram") {
+            maxFiles = 10;
+            errorMessage =
+              "Instagram allows maximum 10 images per carousel post.";
+          } else if (platform === "twitter") {
+            maxFiles = 4;
+            errorMessage = "Twitter allows maximum 4 media files per tweet.";
           }
-        };
-        reader.readAsDataURL(file);
+
+          if (files.length > maxFiles) {
+            preview.innerHTML = `<div class="p-3 bg-red-100 text-red-700 rounded-md">${errorMessage}</div>`;
+            return;
+          }
+
+          preview.innerHTML = `<div class="mb-2 text-sm text-gray-600">📎 ${files.length} files selected for ${platform}:</div>`;
+
+          // Create grid for previews
+          const gridDiv = document.createElement("div");
+          gridDiv.className = "grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2";
+
+          Array.from(files).forEach((file, index) => {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              const itemDiv = document.createElement("div");
+              itemDiv.className =
+                "relative border border-gray-300 rounded overflow-hidden";
+
+              if (file.type.startsWith("image/")) {
+                itemDiv.innerHTML = `
+                  <img src="${e.target.result}" alt="Preview ${
+                  index + 1
+                }" class="w-full h-20 object-cover">
+                  <div class="absolute top-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">${
+                    index + 1
+                  }</div>
+                `;
+              } else if (file.type.startsWith("video/")) {
+                itemDiv.innerHTML = `
+                  <video class="w-full h-20 object-cover" muted>
+                    <source src="${e.target.result}" type="${file.type}">
+                  </video>
+                  <div class="absolute top-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">🎥 ${
+                    index + 1
+                  }</div>
+                `;
+              }
+
+              gridDiv.appendChild(itemDiv);
+            };
+            reader.readAsDataURL(file);
+          });
+
+          preview.appendChild(gridDiv);
+        } else {
+          // Single file preview
+          const file = files[0];
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            if (file.type.startsWith("image/")) {
+              preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+            } else {
+              preview.innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
+            }
+          };
+          reader.readAsDataURL(file);
+        }
       }
 
       function previewFromUrl() {
@@ -226,6 +319,7 @@
       async function checkStatus() {
         const statusEl = document.getElementById("status");
         const platform = document.getElementById("selected-platform").value;
+        console.debug("checkStatus() platform=", platform);
 
         // Set checking status with yellow background
         statusEl.textContent = "Checking connection...";
@@ -233,8 +327,11 @@
           "p-3 rounded-md text-sm mt-5 bg-yellow-100 text-yellow-800 border border-yellow-200";
 
         try {
-          const res = await fetch(`/status?platform=${platform}`);
+          const url = `/status?platform=${platform}`;
+          console.debug("fetching status: ", url);
+          const res = await fetch(url);
           const data = await res.json();
+          console.debug("status response:", data);
 
           const ok =
             (platform === "facebook" &&
@@ -270,7 +367,8 @@
       }
 
       // Initialize
-      switchPlatform("facebook");
+      const initialPlatform = "{{ selected_platform | default('facebook') }}";
+      switchPlatform(initialPlatform);
       checkStatus();
       updateCharCount();
     </script>

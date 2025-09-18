@@ -1,8 +1,8 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, send_from_directory
 import os
-from fb_script import FacebookPoster
-from twitter_script import TwitterPoster
-from instagram_script import InstagramPoster
+from scripts.fb_script import FacebookPoster
+from scripts.twitter_script import TwitterPoster
+from scripts.instagram_script import InstagramPoster
 from dotenv import load_dotenv
 from werkzeug.utils import secure_filename
 
@@ -35,7 +35,9 @@ def allowed_file(filename, file_type):
 @app.route('/')
 def index():
     """Main page with posting form"""
-    return render_template('index.html')
+    # Read the selected platform from query params so the UI can preserve state
+    selected_platform = request.args.get('platform', 'facebook')
+    return render_template('index.html', selected_platform=selected_platform)
 
 @app.route('/post', methods=['POST'])
 def post_message():
@@ -53,119 +55,235 @@ def post_message():
             
             if not poster.verify_token() or not poster.verify_page_access():
                 flash('Facebook authentication failed. Check your credentials.', 'error')
-                return redirect(url_for('index'))
+                return redirect(url_for('index', platform='facebook'))
             
             poster.get_page_token()
             
-            # Handle file upload for Facebook
-            if 'media_file' in request.files and request.files['media_file'].filename != '':
-                file = request.files['media_file']
+            # Handle multiple file uploads for Facebook
+            uploaded_files = request.files.getlist('media_file')
+            image_files = []
+            video_files = []
+            temp_files = []  # Keep track for cleanup
+            
+            # Process uploaded files
+            for file in uploaded_files:
+                if file and file.filename != '':
+                    filename = secure_filename(file.filename)
+                    filepath = os.path.join(UPLOAD_FOLDER, filename)
+                    file.save(filepath)
+                    temp_files.append(filepath)
+                    
+                    if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
+                        image_files.append(filepath)
+                    elif file.content_type.startswith('video/') and allowed_file(file.filename, 'video'):
+                        video_files.append(filepath)
+                    else:
+                        # Clean up and return error
+                        for temp_file in temp_files:
+                            try:
+                                os.remove(temp_file)
+                            except:
+                                pass
+                        flash('Invalid file type for Facebook. Please upload image or video files only.', 'error')
+                        return redirect(url_for('index', platform='facebook'))
+            
+            # Determine posting method based on uploaded files
+            try:
+                if len(image_files) > 1:
+                    # Multiple images - use multi-photo post
+                    if len(image_files) > 10:
+                        flash('Facebook allows maximum 10 images per post.', 'error')
+                        success = False
+                    else:
+                        print(f"📸 Posting {len(image_files)} images to Facebook")
+                        success = poster.post_multiple_photos(image_files, message if message else None)
                 
-                if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(UPLOAD_FOLDER, filename)
-                    file.save(filepath)
-                    
-                    success = poster.post_photo(filepath, message if message else None)
-                    
-                    try:
-                        os.remove(filepath)
-                    except:
-                        pass
-                        
-                elif file.content_type.startswith('video/') and allowed_file(file.filename, 'video'):
-                    filename = secure_filename(file.filename)
-                    filepath = os.path.join(UPLOAD_FOLDER, filename)
-                    file.save(filepath)
-                    
-                    success = poster.post_video(filepath, message if message else None)
-                    
-                    try:
-                        os.remove(filepath)
-                    except:
-                        pass
+                elif len(image_files) == 1:
+                    # Single image
+                    print("📸 Posting single image to Facebook")
+                    success = poster.post_photo(image_files[0], message if message else None)
+                
+                elif len(video_files) == 1:
+                    # Single video (Facebook doesn't support multiple videos in one post)
+                    print("🎥 Posting video to Facebook")
+                    success = poster.post_video(video_files[0], message if message else None)
+                
+                elif len(video_files) > 1:
+                    # Multiple videos not supported
+                        flash('Facebook does not support multiple videos in one post. Please upload one video at a time.', 'error')
+                        success = False
+                
+                elif image_files and video_files:
+                    # Mixed media not supported
+                        flash('Facebook does not support mixing images and videos in one post. Please upload either images or videos, not both.', 'error')
+                        success = False
+                
                 else:
-                    flash('Invalid file type for Facebook. Please upload an image or video file.', 'error')
-                    return redirect(url_for('index'))
-            else:
-                # No file uploaded, post text message
-                if not message:
-                    flash('Please enter a message or upload a file!', 'error')
-                    return redirect(url_for('index'))
+                    # No files uploaded, post text message
+                    if not message:
+                        flash('Please enter a message or upload files!', 'error')
+                        success = False
+                    else:
+                        print("💬 Posting text message to Facebook")
+                        success = poster.post(message, link if link else None)
                 
-                success = poster.post(message, link if link else None)
+            finally:
+                # Clean up temporary files
+                for temp_file in temp_files:
+                    try:
+                        os.remove(temp_file)
+                        print(f"🗑️ Cleaned up temp file: {temp_file}")
+                    except:
+                        pass
         
         elif platform == 'twitter':
             # Twitter posting logic
             poster = TwitterPoster()
             
-            # Handle file upload for Twitter
-            if 'media_file' in request.files and request.files['media_file'].filename != '':
-                file = request.files['media_file']
-                
-                if (file.content_type.startswith('image/') and allowed_file(file.filename, 'image')) or \
-                   (file.content_type.startswith('video/') and allowed_file(file.filename, 'video')):
+            # Handle multiple file uploads for Twitter (max 4 files)
+            uploaded_files = request.files.getlist('media_file')
+            media_files = []
+            temp_files = []  # Keep track for cleanup
+            
+            # Process uploaded files
+            for file in uploaded_files:
+                if file and file.filename != '':
                     filename = secure_filename(file.filename)
                     filepath = os.path.join(UPLOAD_FOLDER, filename)
                     file.save(filepath)
+                    temp_files.append(filepath)
                     
-                    success = poster.post(message if message else "📎 Media post", [filepath])
-                    
+                    if (file.content_type.startswith('image/') and allowed_file(file.filename, 'image')) or \
+                       (file.content_type.startswith('video/') and allowed_file(file.filename, 'video')):
+                        media_files.append(filepath)
+                    else:
+                        # Clean up and return error
+                        for temp_file in temp_files:
+                            try:
+                                os.remove(temp_file)
+                            except:
+                                pass
+                        flash('Invalid file type for Twitter. Please upload image or video files only.', 'error')
+                        return redirect(url_for('index', platform='twitter'))
+            
+            try:
+                # Check Twitter's 4-file limit
+                if len(media_files) > 4:
+                    flash('Twitter allows maximum 4 media files per tweet.', 'error')
+                    success = False
+                elif len(media_files) > 0:
+                    # Post with media files
+                    print(f"📎 Posting {len(media_files)} media file(s) to Twitter")
+                    success = poster.post(message if message else "📎 Media post", media_files)
+                else:
+                    # No files uploaded, post text message
+                    if not message:
+                        flash('Please enter a message or upload media files!', 'error')
+                        success = False
+                    else:
+                        print("💬 Posting text message to Twitter")
+                        success = poster.post(message)
+                        
+            finally:
+                # Clean up temporary files
+                for temp_file in temp_files:
                     try:
-                        os.remove(filepath)
+                        os.remove(temp_file)
+                        print(f"🗑️ Cleaned up temp file: {temp_file}")
                     except:
                         pass
-                else:
-                    flash('Invalid file type for Twitter. Please upload an image or video file.', 'error')
-                    return redirect(url_for('index'))
-            else:
-                # No file uploaded, post text message
-                if not message:
-                    flash('Please enter a message!', 'error')
-                    return redirect(url_for('index'))
-                
-                success = poster.post(message)
         
         elif platform == 'instagram':
             try:
                 ig = InstagramPoster()
-                # Print verification to terminal
                 print(f"✅ Instagram poster initialized for IG ID {ig.ig_id}")
 
-                # If a file was uploaded via the form, save it and pass local path to poster
-                if 'media_file' in request.files and request.files['media_file'].filename != '':
-                    file = request.files['media_file']
-                    if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
+                # Accept multiple images (carousel) OR a single video, not both
+                uploaded_files = request.files.getlist('media_file')
+                image_files = []
+                video_files = []
+                temp_files = []
+
+                for file in uploaded_files:
+                    if file and file.filename != '':
                         filename = secure_filename(file.filename)
                         temp_dir = os.path.join(UPLOAD_FOLDER, 'temp')
                         os.makedirs(temp_dir, exist_ok=True)
                         filepath = os.path.join(temp_dir, filename)
                         file.save(filepath)
-                        print(f"📁 Saved temporary upload: {filepath}")
-                        # Let InstagramPoster handle uploading to Cloudinary if configured.
-                        result = ig.post_image(filepath, message if message else '')
-                        try:
-                            os.remove(filepath)
-                        except:
-                            pass
+                        temp_files.append(filepath)
+
+                        if file.content_type.startswith('image/') and allowed_file(file.filename, 'image'):
+                            image_files.append(filepath)
+                        elif file.content_type.startswith('video/') and allowed_file(file.filename, 'video'):
+                            video_files.append(filepath)
+                        else:
+                            for tf in temp_files:
+                                try:
+                                    os.remove(tf)
+                                except:
+                                    pass
+                            flash('Invalid file type for Instagram. Please upload image or video files only.', 'error')
+                            return redirect(url_for('index', platform='instagram'))
+
+                try:
+                    # Mixed media not allowed
+                    if image_files and video_files:
+                        flash('Instagram does not support mixing images and videos in one post. Upload either images (carousel) or a single video.', 'error')
+                        success = False
+
+                    # Video posting (only one video allowed per post here)
+                    elif len(video_files) == 1:
+                        print(f"🎥 Posting single video to Instagram: {video_files[0]}")
+                        result = ig.post_video(video_files[0], message if message else '')
+                        success = bool(result)
+                    elif len(video_files) > 1:
+                        flash('Instagram supports one video per post. Please upload a single video.', 'error')
+                        success = False
+
+                    # Carousel or single image
+                    elif len(image_files) > 1:
+                        if len(image_files) > 10:
+                            flash('Instagram allows maximum 10 images per carousel post.', 'error')
+                            success = False
+                        else:
+                            print(f"📸 Creating Instagram carousel with {len(image_files)} images")
+                            result = ig.post_carousel(image_files, message if message else '')
+                            success = bool(result)
+                    elif len(image_files) == 1:
+                        print("📸 Posting single image to Instagram")
+                        result = ig.post_image(image_files[0], message if message else '')
                         success = bool(result)
                     else:
-                        flash('Invalid file type for Instagram. Please upload an image file.', 'error')
-                        return redirect(url_for('index'))
-                else:
-                    # Use 'link' form field as image URL
-                    if not link or not link.startswith('http'):
-                        flash('Please provide a publicly accessible image URL in the link field for Instagram posts.', 'error')
-                        return redirect(url_for('index'))
-                    result = ig.post_image(link, message if message else '')
-                    success = bool(result)
+                        # No files uploaded, check link
+                        if link and link.startswith('http'):
+                            # Accept video URL or image URL
+                            if any(ext in link.lower() for ext in ('.mp4', '.mov', '.webm')):
+                                print("🔗 Posting video from URL to Instagram")
+                                result = ig.post_video(link, message if message else '')
+                                success = bool(result)
+                            else:
+                                print("🔗 Posting image from URL to Instagram")
+                                result = ig.post_image(link, message if message else '')
+                                success = bool(result)
+                        else:
+                            flash('Please upload image/video files or provide a publicly accessible media URL for Instagram posts.', 'error')
+                            success = False
+
+                finally:
+                    for tf in temp_files:
+                        try:
+                            os.remove(tf)
+                            print(f"🗑️ Cleaned up temp file: {tf}")
+                        except:
+                            pass
             except ValueError as e:
                 flash(f'Configuration error: {e}', 'error')
-                return redirect(url_for('index'))
+                return redirect(url_for('index', platform='instagram'))
             except Exception as e:
                 print(f"Instagram error: {e}")
                 flash('Failed to post to Instagram. Check console for details.', 'error')
-                return redirect(url_for('index'))
+                return redirect(url_for('index', platform='instagram'))
 
         else:
             flash('Invalid platform selected.', 'error')
@@ -186,10 +304,13 @@ def post_message():
             
     except ValueError as e:
         flash(f'Configuration error: {e}', 'error')
+        selected = locals().get('platform', 'facebook')
+        return redirect(url_for('index', platform=selected))
     except Exception as e:
         flash(f'Unexpected error: {e}', 'error')
-    
-    return redirect(url_for('index'))
+        selected = locals().get('platform', 'facebook')
+        return redirect(url_for('index', platform=selected))
+
 
 @app.route('/status')
 def status():
@@ -234,8 +355,13 @@ def status():
                 tw_valid = tw_poster.verify_credentials()
                 tw_username = None
                 if tw_valid:
-                    tw_username = tw_poster.get_username()
-                
+                    try:
+                        me = tw_poster.client.get_me()
+                        if getattr(me, 'data', None):
+                            tw_username = getattr(me.data, 'username', None) or me.data.get('username') if isinstance(me.data, dict) else None
+                    except Exception as ex:
+                        print(f"ℹ️ Could not fetch Twitter username via client.get_me(): {ex}")
+
                 result['twitter'] = {
                     'credentials_valid': tw_valid,
                     'username': tw_username

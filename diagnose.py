@@ -2,8 +2,9 @@ import requests
 import tweepy
 import os
 from dotenv import load_dotenv
-import fb_script
-import instagram_script
+import scripts.fb_script as fb_script
+import scripts.instagram_script as instagram_script
+import scripts.twitter_script as twitter_script
 
 load_dotenv()
 
@@ -91,35 +92,45 @@ def test_instagram_credentials():
 
 def test_twitter_credentials():
     """Test Twitter credentials with minimal setup"""
+    # Prefer using the project's TwitterPoster if available
+    try:
+        poster = twitter_script.TwitterPoster()
+        print("✅ TwitterPoster initialized from scripts.twitter_script")
+        if poster.verify_credentials():
+            print("✅ Twitter API authentication successful (via TwitterPoster)")
+            return True
+    except Exception as e:
+        # If TwitterPoster is not configured or fails, fall back to manual tweepy check
+        print(f"ℹ️ TwitterPoster check skipped/failed: {e}")
+
+    # Fallback: try minimal tweepy-based check using environment vars
     API_KEY = os.getenv("TWITTER_API_KEY")
     API_SECRET = os.getenv("TWITTER_API_SECRET_KEY")
     ACCESS_TOKEN = os.getenv("TWITTER_ACCESS_TOKEN")
     ACCESS_SECRET = os.getenv("TWITTER_ACCESS_SECRET_TOKEN")
-    
+
     if not all([API_KEY, API_SECRET, ACCESS_TOKEN, ACCESS_SECRET]):
-        print("❌ Missing Twitter credentials in .env file")
+        print("❌ Missing Twitter credentials in .env file (fallback check)")
         return False
-    
-    print("✅ All Twitter credentials found in .env")
-    
+
+    print("✅ All Twitter credentials found in .env (fallback check)")
+
     try:
-        # Try with correct configuration (no timeout parameter)
         client = tweepy.Client(
             consumer_key=API_KEY,
             consumer_secret=API_SECRET,
             access_token=ACCESS_TOKEN,
             access_token_secret=ACCESS_SECRET
         )
-        
-        # Simple API call without invalid timeout parameter
+
         me = client.get_me()
-        if me.data:
+        if getattr(me, 'data', None):
             print(f"✅ Twitter API authentication successful: @{me.data.username}")
             return True
-            
+
     except Exception as e:
-        print(f"❌ Twitter authentication failed: {e}")
-    
+        print(f"❌ Twitter authentication failed (fallback): {e}")
+
     return False
 
 if __name__ == "__main__":
