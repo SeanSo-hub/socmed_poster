@@ -301,6 +301,9 @@ def post_message():
             flash(f'Content posted successfully to {platform_name}!', 'success')
         else:
             flash(f'Failed to post content to {platform}. Check console for details.', 'error')
+        
+        # Always redirect back to preserve platform selection
+        return redirect(url_for('index', platform=platform))
             
     except ValueError as e:
         flash(f'Configuration error: {e}', 'error')
