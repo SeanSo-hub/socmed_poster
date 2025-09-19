@@ -11,20 +11,12 @@
       <h1 class="text-2xl font-bold text-gray-800 mb-5">SocMed Poster</h1>
 
       <!-- Flash messages -->
-      {% with messages = get_flashed_messages(with_categories=true) %} {% if
-      messages %} {% for category, message in messages %}
-      <div
-        id="flash-message"
-        class="p-3 mb-4 rounded-md transition-opacity duration-500 {% if category == 'success' %}bg-green-100 text-green-800 border border-green-200{% else %}bg-red-100 text-red-800 border border-red-200{% endif %}"
-      >
-        {{ message }}
-      </div>
-      {% endfor %} {% endif %} {% endwith %}
+      {% include '_flash.html' %}
 
       <form
         id="post-form"
         method="POST"
-        action="{{ url_for('post_message') }}"
+        action="{{ url_for('main.post_message') }}"
         enctype="multipart/form-data"
       >
         <input
@@ -34,34 +26,7 @@
           value="{{ selected_platform | default('facebook') }}"
         />
 
-        <div
-          class="flex mb-5 border border-gray-300 rounded-md overflow-hidden"
-        >
-          <button
-            type="button"
-            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100 active"
-            data-platform="facebook"
-            onclick="switchPlatform('facebook')"
-          >
-            📘 Facebook
-          </button>
-          <button
-            type="button"
-            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100"
-            data-platform="twitter"
-            onclick="switchPlatform('twitter')"
-          >
-            🐦 Twitter
-          </button>
-          <button
-            type="button"
-            class="tab flex-1 p-3 bg-gray-50 border-none cursor-pointer font-medium hover:bg-gray-100"
-            data-platform="instagram"
-            onclick="switchPlatform('instagram')"
-          >
-            📸 Instagram
-          </button>
-        </div>
+        {% include '_platform_tabs.html' %}
 
         <div class="mb-4">
           <label for="message" class="block mb-2 font-semibold text-gray-600"
@@ -144,247 +109,13 @@
       </div>
     </div>
 
+    <!-- Minimal inline config for the external script -->
     <script>
-      function switchPlatform(platform) {
-        console.debug("switchPlatform called. target platform=", platform);
-        console.debug(
-          "hidden before=",
-          document.getElementById("selected-platform").value
-        );
-        document.getElementById("selected-platform").value = platform;
-        console.debug(
-          "hidden after=",
-          document.getElementById("selected-platform").value
-        );
-        document.querySelectorAll(".tab").forEach((tab) => {
-          if (tab.dataset.platform === platform) {
-            tab.classList.add("bg-blue-500", "text-white");
-            tab.classList.remove("bg-gray-50", "hover:bg-gray-100");
-          } else {
-            tab.classList.remove("bg-blue-500", "text-white");
-            tab.classList.add("bg-gray-50", "hover:bg-gray-100");
-          }
-        });
-
-        const icon = document.getElementById("submit-icon");
-        const text = document.getElementById("submit-text");
-        const limit = document.getElementById("char-limit");
-        const textarea = document.getElementById("message");
-        const fileInput = document.getElementById("media_file");
-        const mediaLimits = document.getElementById("media-limits");
-
-        if (platform === "facebook") {
-          icon.textContent = "📘";
-          text.textContent = "Post to Facebook";
-          limit.textContent = "63,206";
-          textarea.maxLength = 63206;
-          fileInput.multiple = true; // Allow multiple files for Facebook
-          fileInput.accept = "image/*,video/*";
-          mediaLimits.textContent = "Up to 10 images or 1 video per post";
-        } else if (platform === "twitter") {
-          icon.textContent = "🐦";
-          text.textContent = "Post to Twitter";
-          limit.textContent = "280";
-          textarea.maxLength = 280;
-          fileInput.multiple = true; // Twitter already supports multiple files
-          fileInput.accept = "image/*,video/*";
-          mediaLimits.textContent = "Up to 4 images/videos per tweet";
-        } else if (platform === "instagram") {
-          icon.textContent = "📸";
-          text.textContent = "Post to Instagram";
-          limit.textContent = "2,200";
-          textarea.maxLength = 2200;
-          fileInput.multiple = true; // Instagram supports multiple images
-          fileInput.accept = "image/*"; // Instagram only accepts images
-          mediaLimits.textContent =
-            "Up to 10 images per carousel (images only)";
-        }
-        updateCharCount();
-        checkStatus();
-      }
-
-      function updateCharCount() {
-        const textarea = document.getElementById("message");
-        const counter = document.getElementById("char-count");
-        const length = textarea.value.length;
-        counter.textContent = length;
-
-        const platform = document.getElementById("selected-platform").value;
-        if (platform === "twitter") {
-          counter.className =
-            length > 280
-              ? "text-red-500"
-              : length > 250
-              ? "text-yellow-500"
-              : "text-gray-500";
-        } else {
-          counter.className = "text-gray-500";
-        }
-      }
-
-      function previewFile() {
-        const fileInput = document.getElementById("media_file");
-        const files = fileInput.files;
-        const preview = document.getElementById("media-preview");
-        const platform = document.getElementById("selected-platform").value;
-
-        document.getElementById("image_url").value = "";
-
-        if (!files || files.length === 0) {
-          preview.innerHTML = "";
-          return;
-        }
-
-        // Handle multiple files
-        if (files.length > 1) {
-          preview.innerHTML = "";
-
-          // Check platform-specific limits
-          let maxFiles, errorMessage;
-          if (platform === "facebook") {
-            maxFiles = 10;
-            errorMessage = "Facebook allows maximum 10 files per post.";
-          } else if (platform === "instagram") {
-            maxFiles = 10;
-            errorMessage =
-              "Instagram allows maximum 10 images per carousel post.";
-          } else if (platform === "twitter") {
-            maxFiles = 4;
-            errorMessage = "Twitter allows maximum 4 media files per tweet.";
-          }
-
-          if (files.length > maxFiles) {
-            preview.innerHTML = `<div class="p-3 bg-red-100 text-red-700 rounded-md">${errorMessage}</div>`;
-            return;
-          }
-
-          preview.innerHTML = `<div class="mb-2 text-sm text-gray-600">📎 ${files.length} files selected for ${platform}:</div>`;
-
-          // Create grid for previews
-          const gridDiv = document.createElement("div");
-          gridDiv.className = "grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2";
-
-          Array.from(files).forEach((file, index) => {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              const itemDiv = document.createElement("div");
-              itemDiv.className =
-                "relative border border-gray-300 rounded overflow-hidden";
-
-              if (file.type.startsWith("image/")) {
-                itemDiv.innerHTML = `
-                  <img src="${e.target.result}" alt="Preview ${
-                  index + 1
-                }" class="w-full h-20 object-cover">
-                  <div class="absolute top-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">${
-                    index + 1
-                  }</div>
-                `;
-              } else if (file.type.startsWith("video/")) {
-                itemDiv.innerHTML = `
-                  <video class="w-full h-20 object-cover" muted>
-                    <source src="${e.target.result}" type="${file.type}">
-                  </video>
-                  <div class="absolute top-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">🎥 ${
-                    index + 1
-                  }</div>
-                `;
-              }
-
-              gridDiv.appendChild(itemDiv);
-            };
-            reader.readAsDataURL(file);
-          });
-
-          preview.appendChild(gridDiv);
-        } else {
-          // Single file preview
-          const file = files[0];
-          const reader = new FileReader();
-          reader.onload = (e) => {
-            if (file.type.startsWith("image/")) {
-              preview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
-            } else {
-              preview.innerHTML = `<video controls><source src="${e.target.result}" type="${file.type}"></video>`;
-            }
-          };
-          reader.readAsDataURL(file);
-        }
-      }
-
-      function previewFromUrl() {
-        const url = document.getElementById("image_url").value.trim();
-        const preview = document.getElementById("media-preview");
-        if (document.getElementById("media_file").files.length > 0) return;
-        preview.innerHTML = url ? `<img src="${url}" alt="Preview">` : "";
-      }
-
-      async function checkStatus() {
-        const statusEl = document.getElementById("status");
-        const platform = document.getElementById("selected-platform").value;
-        console.debug("checkStatus() platform=", platform);
-
-        // Set checking status with yellow background
-        statusEl.textContent = "Checking connection...";
-        statusEl.className =
-          "p-3 rounded-md text-sm mt-5 bg-yellow-100 text-yellow-800 border border-yellow-200";
-
-        try {
-          const url = `/status?platform=${platform}`;
-          console.debug("fetching status: ", url);
-          const res = await fetch(url);
-          const data = await res.json();
-          console.debug("status response:", data);
-
-          const ok =
-            (platform === "facebook" &&
-              data.facebook?.token_valid &&
-              data.facebook?.page_access) ||
-            (platform === "twitter" && data.twitter?.credentials_valid) ||
-            (platform === "instagram" &&
-              data.instagram?.token_valid &&
-              data.instagram?.account_access);
-
-          statusEl.textContent = ok
-            ? `✓ Connected to ${platform}`
-            : `✗ Connection failed`;
-
-          if (ok) {
-            statusEl.className =
-              "p-3 rounded-md text-sm mt-5 bg-green-100 text-green-800 border border-green-200";
-          } else {
-            statusEl.className =
-              "p-3 rounded-md text-sm mt-5 bg-red-100 text-red-800 border border-red-200";
-          }
-        } catch {
-          statusEl.textContent = "✗ Unable to check status";
-          statusEl.className =
-            "p-3 rounded-md text-sm mt-5 bg-red-100 text-red-800 border border-red-200";
-        }
-      }
-
-      function resetForm() {
-        document.getElementById("post-form").reset();
-        document.getElementById("media-preview").innerHTML = "";
-        updateCharCount();
-      }
-
-      // Initialize
-      const initialPlatform = "{{ selected_platform | default('facebook') }}";
-      switchPlatform(initialPlatform);
-      checkStatus();
-      updateCharCount();
-
-      // Auto-hide flash messages after 3 seconds
-      const flashMessage = document.getElementById("flash-message");
-      if (flashMessage) {
-        setTimeout(() => {
-          flashMessage.style.opacity = "0";
-          setTimeout(() => {
-            flashMessage.style.display = "none";
-          }, 500); // Wait for fade transition to complete
-        }, 3000);
-      }
+      window.SOCMED_CONFIG = {
+        STATUS_URL: "{{ url_for('api.status') }}",
+        INITIAL_PLATFORM: "{{ selected_platform | default('facebook') }}",
+      };
     </script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   </body>
 </html>
