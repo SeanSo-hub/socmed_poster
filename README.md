@@ -17,48 +17,36 @@ A unified solution for posting to Facebook, Twitter, and Instagram with both web
 3. **Run Web UI**: `python app.py` → Open http://localhost:5000
 4. **Run CLI**: `python scripts/{platform}_script.py` for direct posting
 
-### Required Credentials (.env)
+## Project structure
 
-```env
-# Facebook
-FACEBOOK_PAGE_ID=your_page_id
-FACEBOOK_ACCESS_TOKEN=your_token
-
-# Twitter
-TWITTER_API_KEY=your_key
-TWITTER_API_SECRET_KEY=your_secret
-TWITTER_ACCESS_TOKEN=your_token
-TWITTER_ACCESS_SECRET_TOKEN=your_secret
-
-# Instagram (Business account required)
-INSTAGRAM_USER_ID=your_user_id
-INSTAGRAM_ACCESS_TOKEN=your_token
-
-# Optional: For Instagram local uploads
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_UPLOAD_PRESET=your_preset
-
-## 📁 Project Structure
-
-```
-├── app.py                 # Flask web interface
-├── diagnose.py            # Multi-platform diagnostic tool
-├── requirements.txt       # Python dependencies
-├── .env                   # API credentials (create this)
-├── scripts/               # Platform-specific posting modules
-│   ├── fb_script.py       # Facebook Graph API client
-│   ├── twitter_script.py  # Twitter API client (v2 + v1.1 fallback)
-│   └── instagram_script.py # Instagram Graph API client
-├── templates/
-│   └── index.html         # Web UI with dynamic features
-└── uploads/               # Temporary file storage
+```text
+├── app.py                     # Flask application factory + startup
+├── diagnose.py                # Multi-platform diagnostic utility
+├── requirements.txt           # Python dependencies
+├── README.md                  # This file
+├── .env                       # API credentials (create locally)
+├── scripts/                   # Posting clients (Facebook, Twitter, Instagram)
+│   ├── fb_script.py
+│   ├── twitter_script.py
+│   └── instagram_script.py
+├── routes/                    # Flask blueprints (UI and API)
+│   ├── __init__.py
+│   ├── main.py                # index & /post route
+│   ├── api.py                 # /api/status and /api/health
+│   └── utils.py               # public uploads + helpers
+├── templates/                 # Jinja templates
+│   ├── index.html
+│   ├── _flash.html
+│   └── _platform_tabs.html
+├── static/                    # Static assets (JS/CSS)
+│   └── js/app.js
+└── uploads/                   # Temporary file storage (created at runtime)
 ```
 
-## 🆕 Recent Updates
+Notes
 
-- ✅ **Fixed Flask view return errors** - Proper redirect handling after posts
-- ✅ **Auto-hiding flash messages** - Success/error messages fade after 3 seconds
-- ✅ **Dynamic media limits** - Platform-specific upload limits shown in UI
-- ✅ **Enhanced Twitter reliability** - Retry logic + v1.1 API fallback
-- ✅ **Organized code structure** - All posting scripts moved to `/scripts` folder
-- ✅ **Improved diagnostics** - Comprehensive connection testing in `diagnose.py`
+- The frontend JS is in `static/js/app.js`. Templates include minimal inline config via `window.SOCMED_CONFIG`.
+- Routes were refactored into `routes/` blueprints (main and api). Update references to endpoints if you rename blueprints.
+- Use `diagnose.py` to validate credentials and network/API reachability.
+
+If you want, I can run the app and perform a quick smoke test of `/` and `/api/status`.
