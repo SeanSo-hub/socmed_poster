@@ -1,5 +1,4 @@
-# SocMed Poster
-## 🌐 **Web Interface**: Tailwind CSS UI with real-time platform status
+# SocMed P## 🌐 **Web Interface**: Tailwind CSS UI with real-time platform status
 
 - 🔍 **Smart Diagnostics**: Platform-specific connection testing with `diagnose.py`
 

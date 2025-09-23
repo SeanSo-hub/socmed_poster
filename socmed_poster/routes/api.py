@@ -1,8 +1,8 @@
 from flask import Blueprint, jsonify, request
-from scripts.fb_script import FacebookPoster
-from scripts.twitter_script import TwitterPoster
-from scripts.instagram_script import InstagramPoster
-from scripts.linkedin_script import LinkedInPoster
+from ..scripts.fb_script import FacebookPoster
+from ..scripts.twitter_script import TwitterPoster
+from ..scripts.instagram_script import InstagramPoster
+from ..scripts.linkedin_script import LinkedInPoster
 
 api_bp = Blueprint('api', __name__, url_prefix='/api')
 

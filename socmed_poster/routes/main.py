@@ -2,10 +2,10 @@ import os
 from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
 from werkzeug.utils import secure_filename
 
-from scripts.fb_script import FacebookPoster
-from scripts.twitter_script import TwitterPoster
-from scripts.instagram_script import InstagramPoster
-from scripts.linkedin_script import LinkedInPoster
+from ..scripts.fb_script import FacebookPoster
+from ..scripts.twitter_script import TwitterPoster
+from ..scripts.instagram_script import InstagramPoster
+from ..scripts.linkedin_script import LinkedInPoster
 
 from .utils import allowed_file
 
