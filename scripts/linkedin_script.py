@@ -1,63 +1,90 @@
 import os
 import requests
+import logging
 from dotenv import load_dotenv
 
 load_dotenv()
 
+logger = logging.getLogger(__name__)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+    logger.addHandler(handler)
+logger.setLevel(logging.INFO)
+
+
 class LinkedInPoster:
-    def __init__(self):
-        self.access_token = os.getenv('LINKEDIN_ACCESS_TOKEN')
-        self.person_id = os.getenv('LINKEDIN_CLIENT_ID')
+    """Minimal helper for posting simple text UGC to LinkedIn.
+
+    Notes:
+    - Requires LINKEDIN_ACCESS_TOKEN in environment.
+    - LINKEDIN_PERSON_ID is optional; if not provided the class will try to fetch it from /me.
+    """
+
+    def __init__(self, access_token=None, person_id=None):
+        self.access_token = access_token or os.getenv('LINKEDIN_ACCESS_TOKEN')
+        # require LINKEDIN_PERSON_ID (numeric id) — we will not call /me automatically
+        self.person_id = person_id or os.getenv('LINKEDIN_PERSON_ID')
         self.api_url = "https://api.linkedin.com/v2"
-        
-        if not self.access_token or not self.person_id:
-            raise ValueError("LinkedIn credentials not found in environment variables")
-    
+
+        if not self.access_token:
+            raise ValueError("LinkedIn access token not found in environment variables (LINKEDIN_ACCESS_TOKEN)")
+        if not self.person_id:
+            raise ValueError("LinkedIn person id not found in environment variables (LINKEDIN_PERSON_ID).\nProvide the numeric person id; this module will not call /me automatically.")
+
+    def _headers(self):
+        # X-Restli-Protocol-Version is recommended for UGC endpoints
+        return {
+            'Authorization': f'Bearer {self.access_token}',
+            'Content-Type': 'application/json',
+            'X-Restli-Protocol-Version': '2.0.0'
+        }
+
     def verify_credentials(self):
-        """Verify LinkedIn API credentials"""
-        headers = {
-            'Authorization': f'Bearer {self.access_token}',
-            'Content-Type': 'application/json'
-        }
-        
-        try:
-            response = requests.get(f"{self.api_url}/people/{self.person_id}", headers=headers)
-            return response.status_code == 200
-        except Exception as e:
-            print(f"LinkedIn verification error: {e}")
+        """Verify that required configuration is present.
+
+        NOTE: This method does NOT call /me. If you want to validate the token against
+        LinkedIn's /me endpoint, run a separate one-off check — this module intentionally
+        avoids using /me so it works in environments where /me is restricted.
+        """
+        if not self.access_token:
+            logger.error("Missing LINKEDIN_ACCESS_TOKEN")
             return False
-    
+        if not self.person_id:
+            logger.error("Missing LINKEDIN_PERSON_ID")
+            return False
+        # We can't reliably verify token scopes without calling LinkedIn member endpoints.
+        logger.info("Configuration present (token and person id). Note: no /me verification performed.")
+        return True
+
     def post(self, message):
-        """Post text content to LinkedIn"""
-        headers = {
-            'Authorization': f'Bearer {self.access_token}',
-            'Content-Type': 'application/json'
-        }
-        
+        """Post simple text content as a UGC post.
+
+        Returns True on success, False otherwise.
+        """
+        if not self.person_id:
+            logger.error("Cannot post: LINKEDIN_PERSON_ID not set")
+            return False
+
         post_data = {
             "author": f"urn:li:person:{self.person_id}",
             "lifecycleState": "PUBLISHED",
             "specificContent": {
                 "com.linkedin.ugc.ShareContent": {
-                    "shareCommentary": {
-                        "text": message
-                    },
+                    "shareCommentary": {"text": message},
                     "shareMediaCategory": "NONE"
                 }
             },
-            "visibility": {
-                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
-            }
+            "visibility": {"com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"}
         }
-        
+
         try:
-            response = requests.post(f"{self.api_url}/ugcPosts", json=post_data, headers=headers)
-            if response.status_code == 201:
-                print("✅ Posted to LinkedIn successfully")
+            resp = requests.post(f"{self.api_url}/ugcPosts", json=post_data, headers=self._headers(), timeout=10)
+            if resp.status_code in (200, 201):
+                logger.info("Posted to LinkedIn successfully (status=%s)", resp.status_code)
                 return True
-            else:
-                print(f"❌ LinkedIn post failed: {response.text}")
-                return False
-        except Exception as e:
-            print(f"LinkedIn posting error: {e}")
+            logger.error("LinkedIn post failed: %s %s", resp.status_code, resp.text)
+            return False
+        except requests.RequestException as exc:
+            logger.error("LinkedIn posting error: %s", exc)
             return False
