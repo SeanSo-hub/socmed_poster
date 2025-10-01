@@ -1,22 +1,8 @@
 # SocMed Poster
+
 ## 🌐 **Web Interface**: Tailwind CSS UI with real-time platform status
 
-- 🔍 **Smart Diagnostics**: Platform-specific connection testing with `diagnose.py`
-
-## 🆕 Recent Updates
-
-### ✅ **Instagram Upload Alignment**
-
-- Unified file upload behavior across all platforms
-- Instagram now accepts same image/video file types as Facebook/Twitter
-- Consistent validation and error handling
-
-### ✅ **LinkedIn Integration**
-
-- Added professional LinkedIn posting support
-- Text-only posts to personal profiles
-- OAuth 2.0 authentication via LinkedIn Developer API
-- Full diagnostic and API status checking
+🔍 **Smart Diagnostics**: Platform-specific connection testing with `diagnose.py`
 
 ### ✅ **Self-Contained Package**
 
@@ -36,12 +22,41 @@ A unified solution for posting to Facebook, Twitter, Instagram, and LinkedIn wit
 - 🌐 **Web Interface**: Tailwind CSS UI with real-time platform status
 - 🔍 **Smart Diagnostics**: Platform-specific connection testing with `diagnose.py`
 
-## ⚙️ Quick Setup
+## ⚙️ Quick start
 
-1. **Install**: `pip install -r requirements.txt`
-2. **Configure**: Create `.env` with your API credentials (see below)
-3. **Run Web UI**: `python app.py` → Open http://localhost:5000
-4. **Run CLI**: `python scripts/{platform}_script.py` for direct posting
+1. Install dependencies (choose one):
+
+```powershell
+# Quick (install runtime deps)
+pip install -r requirements.txt
+
+# OR for development (editable install)
+pip install -e .
+```
+
+2. Configure credentials:
+
+```powershell
+copy .env.example .env
+# Edit .env and add your API keys (e.g. LINKEDIN_ACCESS_TOKEN, LINKEDIN_PERSON_ID)
+```
+
+3. Run the app:
+
+```powershell
+# Run from source
+python app.py
+
+# Or run as an installed module
+python -m socmed_poster
+```
+
+4. Test platform APIs or post directly with the helper scripts:
+
+```powershell
+python .\scripts\test_linkedin.py    # requires LINKEDIN_ACCESS_TOKEN and LINKEDIN_PERSON_ID
+python .\scripts\instagram_script.py
+```
 
 ## Project structure
 
@@ -75,6 +90,7 @@ Notes
 - The frontend JS is in `static/js/app.js`. Templates include minimal inline config via `window.SOCMED_CONFIG`.
 - Routes were refactored into `routes/` blueprints (main and api). Update references to endpoints if you rename blueprints.
 - Use `diagnose.py` to validate credentials and network/API reachability.
+- For LinkedIn debugging, prefer `scripts/test_linkedin.py` (posts using `LINKEDIN_PERSON_ID`) or run the Authorization Code flow and call `/me` once to discover the numeric id.
 
 If you want, I can run the app and perform a quick smoke test of `/` and `/api/status`.
 
@@ -104,41 +120,32 @@ python app.py
 
 ### Package Usage
 
-**Run as a module:**
+Run as a module (when installed):
 
-```bash
+```powershell
 python -m socmed_poster
 ```
 
-**Import in Python code:**
+Import in Python code (example):
 
 ```python
-import socmed_poster
-
-# Create the Flask app
-app = socmed_poster.create_app()
+from socmed_poster import create_app
+app = create_app()
 
 # Use individual components
-from socmed_poster.scripts.fb_script import FacebookPoster
-from socmed_poster.scripts.twitter_script import TwitterPoster
-from socmed_poster.scripts.instagram_script import InstagramPoster
-from socmed_poster.scripts.linkedin_script import LinkedInPoster
+from scripts.linkedin_script import LinkedInPoster
 
-# Post to platforms
-fb_poster = FacebookPoster()
-fb_poster.post("Hello from Facebook!")
-
+# When creating LinkedInPoster, provide LINKEDIN_ACCESS_TOKEN and LINKEDIN_PERSON_ID in env
 li_poster = LinkedInPoster()
 li_poster.post("Hello from LinkedIn!")
 ```
 
-**Key Package Features:**
+Key package notes:
 
-- ✅ **Self-contained**: All scripts, templates, and static files included
-- ✅ **Pip installable**: Standard Python package with `pyproject.toml`
-- ✅ **Module execution**: Run with `python -m socmed_poster`
-- ✅ **Import support**: Use components individually in your code
-- ✅ **No external dependencies**: Package includes all necessary files
+- ✅ **Self-contained**: All scripts, templates, and static files are included in the project
+- ✅ **Pip installable**: Standard Python package metadata is present (`pyproject.toml`)
+- ✅ **Module execution**: Run with `python -m socmed_poster` after install
+- ⚠️ **Dependencies**: Install required Python packages via `requirements.txt` or `pip install -e .` before running
 
 ## As a Python package
 
