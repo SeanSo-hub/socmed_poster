@@ -1,0 +1,9 @@
+# Dependencies are defined in pyproject.toml
+# For development installation, use: pip install -e .
+
+# Optional: If you prefer requirements.txt format
+flask>=2.3.0
+requests>=2.31.0
+python-dotenv>=1.0.0
+tweepy>=4.14.0
+Pillow>=10.0.0
