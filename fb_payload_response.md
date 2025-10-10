@@ -1,8 +1,7 @@
-# Facebook Graph API — [Page Post Fields](https://developers.facebook.com/docs/graph-api/reference/page-post/)
-
+# Facebook Graph API
 This document lists all available fields you can request when retrieving a single post object from a Facebook Page using the Graph API
 
-## Basic Info
+## Basic info fields
 
 ```
 | **Field**       | **Type**        | **Description**                                                    |
@@ -20,95 +19,13 @@ This document lists all available fields you can request when retrieving a singl
 
 ```
 
-## Media & Attachments
-
-```
-| **Field**           | **Type**       | **Description**                                        |
-| ------------------- | -------------- | ------------------------------------------------------ |
-| `full_picture`      | string         | Full-size picture from attachment.                     |
-| `child_attachments` | list           | Sub-shares of a multi-link share post.                 |
-| `properties`        | list           | List of properties for attached videos (e.g., length). |
-| `width`             | unsigned int32 | Width of media attachment.                             |
-| `height`            | unsigned int32 | Height of media attachment.                            |
-| `expanded_width`    | unsigned int32 | Expanded width for multi-media posts.                  |
-| `expanded_height`   | unsigned int32 | Expanded height for multi-media posts.                 |
-| `icon`              | string         | Icon representing the type of post.                    |
-```
-
-## Location & Events
-
-```
-| **Field**     | **Type** | **Description**                                                 |
-| ------------- | -------- | --------------------------------------------------------------- |
-| `place`       | Place    | ID of the place associated with the post.                       |
-| `coordinates` | struct   | Contains `checkin_id`, `coords`, `timestamp`, and related info. |
-| `event`       | Event    | Associated event, if applicable.                                |
-```
-
-## Targeting & Visibility
-
-```
-| **Field**             | **Type** | **Description**                                 |
-| --------------------- | -------- | ----------------------------------------------- |
-| `feed_targeting`      | struct   | Targeted audiences for feed visibility.         |
-| `targeting`           | struct   | Audience restrictions and targeting parameters. |
-| `timeline_visibility` | string   | Visibility on timeline.                         |
-| `subscribed`          | bool     | Whether user is subscribed to the post.         |
-```
-
-## Promotion & Engagement
-
-```
-| **Field**                        | **Type**     | **Description**                                |
-| -------------------------------- | ------------ | ---------------------------------------------- |
-| `actions`                        | list         | Action links for the post.                     |
-| `shares`                         | struct       | Number of times the post has been shared.      |
-| `status_type`                    | string       | Type of post (status, photo, video, etc.).     |
-| `promotion_status`               | string       | Status if the post was promoted.               |
-| `allowed_advertising_objectives` | list<string> | Advertising objectives available for the post. |
-| `is_eligible_for_promotion`      | bool         | Whether the post is eligible for promotion.    |
-| `video_buying_eligibility`       | list<enum>   | Eligibility reasons for video promotions.      |
-| `is_instagram_eligible`          | bool         | Whether the post can be promoted on Instagram. |
-| `instagram_eligibility`          | enum         | Returns `eligible` or a reason why not.        |
-```
-
-## Meta Information
-
-```
-| **Field**        | **Type**                          | **Description**                                          |
-| ---------------- | --------------------------------- | -------------------------------------------------------- |
-| `admin_creator`  | BusinessUser | User | Application | Admin who created the post (for multi-admin pages).      |
-| `application`    | Application                       | App that published the post.                             |
-| `parent_id`      | token (Post ID)                   | ID of parent post (e.g., when page is mentioned).        |
-| `promotable_id`  | token (Post ID)                   | ID used for promotion purposes.                          |
-| `via`            | User | Page                       | Source Page or User if post was shared.                  |
-| `call_to_action` | struct                            | Contains `type` and `value` of call-to-action (for ads). |
-```
-
-## Technical / Behavioral Flags
-
-```
-| **Field**                | **Type** | **Description**                                        |
-| ------------------------ | -------- | ------------------------------------------------------ |
-| `backdated_time`         | datetime | Backdated publish time (if any).                       |
-| `scheduled_publish_time` | float    | Scheduled publish time (UNIX timestamp).               |
-| `can_reply_privately`    | bool     | Whether page viewer can send a private reply.          |
-| `is_hidden`              | bool     | Whether the post is hidden.                            |
-| `is_expired`             | bool     | Whether the post’s expiration time has passed.         |
-| `is_popular`             | bool     | Whether post is considered popular.                    |
-| `is_app_share`           | bool     | Whether post references an app.                        |
-| `is_published`           | bool     | Whether post is published (for scheduled posts).       |
-| `is_spherical`           | bool     | Whether post is a 360° (spherical) video.              |
-| `is_inline_created`      | bool     | True if created inline when creating ads.              |
-| `multi_share_end_card`   | bool     | Whether to display end card for multi-link share post. |
-| `multi_share_optimized`  | bool     | Whether order of multi-link shares was auto-optimized. |
-```
+[Check the documentation for all available fields](https://developers.facebook.com/docs/graph-api/reference/page-post/)
 
 # -----------------------------------------------------------------------------
 
 # Sample Request
 
-## Credentials - use these long-lived tokens for requests and proceed to step 2.
+## Credentials (use these long-lived tokens for requests and proceed to step 2)
 
 LONGLIVED_PAGE_ACCESS_TOKEN=EAAQfIUidhhwBPoZC06PPSDZCNag336x1Yogl774VZAZAo8alQxX0PBjryBKhc7ViLRVVI6AIIpoKWeWvi27Htl7ZC16seoSHuDZAsFiCci0BRicQ59WGx9uRRqa0mqItQZADolnIBfMiQp7iEgrYtB01Mui7MpGcuHff3CpWwIwpc4drRbN4T6tUhuotZCE6EzKdZCTeY36Dc
 
