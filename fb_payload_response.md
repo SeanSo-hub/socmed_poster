@@ -126,7 +126,6 @@ GET "https://graph.facebook.com/v24.0/{POST_ID}?fields=id,message,created_time,p
 Example Response:
 
 ```json
-Copy code
 {
   "id": "738929032644857_122102805332....",
   "message": "kdot",
