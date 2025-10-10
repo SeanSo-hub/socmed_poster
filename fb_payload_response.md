@@ -1,4 +1,4 @@
-# Facebook Graph API — Page Post Fields
+# Facebook Graph API — [Page Post Fields](https://developers.facebook.com/docs/graph-api/reference/page-post/)
 
 This document lists all available fields you can request when retrieving a single post object from a Facebook Page using the Graph API
 
@@ -104,15 +104,21 @@ This document lists all available fields you can request when retrieving a singl
 | `multi_share_optimized`  | bool     | Whether order of multi-link shares was auto-optimized. |
 ```
 
-# ---------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 
-# Sample Request - 
+# Sample Request
+
+## Credentials - use these long-lived tokens for requests and proceed to step 2.
+
+LONGLIVED_PAGE_ACCESS_TOKEN=EAAQfIUidhhwBPoZC06PPSDZCNag336x1Yogl774VZAZAo8alQxX0PBjryBKhc7ViLRVVI6AIIpoKWeWvi27Htl7ZC16seoSHuDZAsFiCci0BRicQ59WGx9uRRqa0mqItQZADolnIBfMiQp7iEgrYtB01Mui7MpGcuHff3CpWwIwpc4drRbN4T6tUhuotZCE6EzKdZCTeY36Dc
+
+LONGLIVED_USER_ACCESS_TOKEN=EAAQfIUidhhwBPkjz3I1XaFc9zi7oaEX9azBlKY0qQk4AnsbLZCaj57QjFdU7yKTC9fSZC0aMBRZCK7q5dykl7ng96AZA3DdUiy2KCJMQjlRpkJFZA0ZAl2yYPU2s7D03L76VZAblRkfO39EsZA6PbfnZCD7dD4gL8ZCrda3961D5ZByT8kFBNsV0Ado2vbtcK9ilKN3
 
 ## Step 1. Get a user token in [Graph API Explorer Tool](https://developers.facebook.com/tools/explorer)
 
 USER_ACCESS_TOKEN
 
-## Step 2. Get a PAGE_ACCESS_TOKEN (Use the USER_ACCESS_TOKEN)
+## Step 2. Get a PAGE_ACCESS_TOKEN and page id (Use the USER_ACCESS_TOKEN)
 
 GET "https://graph.facebook.com/v24.0/me/accounts?access_token={USER_ACCESS_TOKEN}"
 
