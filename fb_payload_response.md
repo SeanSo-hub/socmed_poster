@@ -23,7 +23,7 @@ This document lists all available fields you can request when retrieving a singl
 
 # -----------------------------------------------------------------------------
 
-# Sample Request
+# Sample Request - (You can use POSTMAN or Graph API Explorer Tool)
 
 ## Credentials (use these long-lived tokens for requests and proceed to step 2)
 
